@@ -4,7 +4,7 @@ OUTPUT = bin
 GO = go
 GOGET = go get -u
 
-all: $(OUTPUT)/goxel
+all: deps $(OUTPUT)/goxel
 
 $(OUTPUT)/goxel: $(SOURCES)
 	$(GO) build -x -o $(OUTPUT)/goxel $(SOURCES)
