@@ -15,6 +15,46 @@ type monitor struct {
 	Value    uint64
 }
 
+type status struct {
+	Ratio            float64
+	ActiveConnection uint64
+	ChunksCount      int
+}
+
+func printMonitoring(move int, count uint64, speed uint64, files []*File, status []status) int {
+	if count > 0 {
+		fmt.Printf(strings.Repeat("\033[F", move))
+	}
+	fmt.Printf("\r")
+
+	if count == 0 {
+		fmt.Printf("\n")
+	}
+
+	move = 0
+	for idx, f := range files {
+		if f.Error == "" {
+			fmt.Printf("[%3d] - %-120v\n", idx, f.Output)
+		} else {
+			fmt.Printf("[ERR] - %v: %v\n", f.Output, f.Error)
+		}
+		move++
+	}
+	fmt.Printf("\n")
+	move++
+
+	fmt.Printf("Download speed: %8v/s\n", humanize.Bytes(speed))
+	fmt.Printf("\n")
+	move += 2
+
+	for idx, p := range status {
+		fmt.Printf("[%3d] - [%6.2f%%] [%-101v] (%d/%d)\n", idx, p.Ratio, strings.Repeat("=", int(p.Ratio))+">", p.ActiveConnection, p.ChunksCount)
+		move++
+	}
+
+	return move
+}
+
 // Monitoring monitors the current downloads and display the speed and progress for each files
 func Monitoring(files []*File, done chan bool) {
 	monitors := make([]monitor, monitorCount, monitorCount)
@@ -26,27 +66,6 @@ func Monitoring(files []*File, done chan bool) {
 	for {
 		select {
 		default:
-			if count > 0 {
-				fmt.Printf(strings.Repeat("\033[F", move))
-			}
-			fmt.Printf("\r")
-
-			if count == 0 {
-				fmt.Printf("\n")
-			}
-
-			move = 0
-			for idx, f := range files {
-				if f.Error == "" {
-					fmt.Printf("[%3d] - %-120v\n", idx, f.Output)
-				} else {
-					fmt.Printf("[ERR] - %v: %v\n", f.Output, f.Error)
-				}
-				move++
-			}
-			fmt.Printf("\n")
-			move++
-
 			gDone = 0
 
 			var curDone uint64
@@ -56,11 +75,10 @@ func Monitoring(files []*File, done chan bool) {
 				curDelay += vd.Duration
 			}
 
-			fmt.Printf("Download speed: %8v/s\n", humanize.Bytes(uint64(float64(curDone)/(float64(curDelay/time.Nanosecond)/1000000000))))
-			fmt.Printf("\n")
-			move += 2
+			speed := uint64(float64(curDone) / (float64(curDelay/time.Nanosecond) / 1000000000))
 
-			for idx, f := range files {
+			s := make([]status, len(files), len(files))
+			for _, f := range files {
 				if !f.Valid {
 					continue
 				}
@@ -88,9 +106,13 @@ func Monitoring(files []*File, done chan bool) {
 				if total > 0 {
 					ratio = float64(done) / float64(total) * 100
 				}
-				fmt.Printf("[%3d] - [%6.2f%%] [%-101v] (%d/%d)\n", idx, ratio, strings.Repeat("=", int(ratio))+">", conn, len(f.Chunks))
 
-				move++
+				s[0] = status{
+					Ratio:            ratio,
+					ActiveConnection: conn,
+					ChunksCount:      len(f.Chunks),
+				}
+
 				gDone += done
 			}
 
@@ -101,6 +123,8 @@ func Monitoring(files []*File, done chan bool) {
 			count++
 			pDone = gDone
 			lastStart = time.Now()
+
+			move = printMonitoring(move, count, speed, files, s)
 
 			time.Sleep(100 * time.Millisecond)
 
