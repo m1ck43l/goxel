@@ -14,12 +14,12 @@ var headers map[string]string
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 type GoXel struct {
-	AlldebridLogin, AlldebridPassword     string
-	IgnoreSSLVerification                 bool
-	OutputDirectory, InputFile            string
-	MaxConnections, MaxConnectionsPerFile int
-	Headers                               map[string]string
-	URLs                                  []string
+	AlldebridLogin, AlldebridPassword              string
+	IgnoreSSLVerification, DoNotOverrideOutputFile bool
+	OutputDirectory, InputFile                     string
+	MaxConnections, MaxConnectionsPerFile          int
+	Headers                                        map[string]string
+	URLs                                           []string
 }
 
 // Run starts the downloading process
@@ -50,13 +50,16 @@ func (g *GoXel) Run() {
 
 	var wgP sync.WaitGroup
 	for _, url := range urls {
-		wgP.Add(1)
-
 		file := File{
 			URL: url,
 		}
-		file.setOutput(g.OutputDirectory)
 
+		if ok := file.setOutput(g.OutputDirectory, g.DoNotOverrideOutputFile); !ok {
+			file.Error = "File already exists"
+			continue
+		}
+
+		wgP.Add(1)
 		go file.BuildChunks(&wgP, chunks, g.MaxConnectionsPerFile)
 
 		results = append(results, &file)

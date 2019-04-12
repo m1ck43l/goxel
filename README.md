@@ -40,6 +40,8 @@ goxel [options] [url1] [url2] [url...]
         Max number of connections (default 8)
   -max-conn-file int
         Max number of connections per file (default 4)
+  -no-override
+        Do not override existing file(s)
   -output string
         Output directory
   -version

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version         = 0.2
+	version         = 0.3
 	usageMsg string = "goxel [options] [url1] [url2] [url...]\n"
 )
 
@@ -31,6 +31,7 @@ func main() {
 	inputFile := flag.String("file", "", "Links file")
 	outputDirectory := flag.String("output", "", "Output directory")
 	ignoreSSLVerification := flag.Bool("insecure", false, "Bypass SSL validation")
+	doNotOverrideOutputFile := flag.Bool("no-override", false, "Do not override existing file(s)")
 
 	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username")
 	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password")
@@ -59,15 +60,16 @@ func main() {
 	}
 
 	goxel := goxel.GoXel{
-		URLs:                  urls,
-		Headers:               headers,
-		IgnoreSSLVerification: *ignoreSSLVerification,
-		OutputDirectory:       *outputDirectory,
-		InputFile:             *inputFile,
-		MaxConnections:        *nbrConnexion,
-		MaxConnectionsPerFile: *nbrPerFile,
-		AlldebridLogin:        *alldebridLogin,
-		AlldebridPassword:     *alldebridPassword,
+		URLs:                    urls,
+		Headers:                 headers,
+		IgnoreSSLVerification:   *ignoreSSLVerification,
+		OutputDirectory:         *outputDirectory,
+		InputFile:               *inputFile,
+		MaxConnections:          *nbrConnexion,
+		MaxConnectionsPerFile:   *nbrPerFile,
+		DoNotOverrideOutputFile: *doNotOverrideOutputFile,
+		AlldebridLogin:          *alldebridLogin,
+		AlldebridPassword:       *alldebridPassword,
 	}
 	goxel.Run()
 }
