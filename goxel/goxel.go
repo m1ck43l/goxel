@@ -1,12 +1,9 @@
 package goxel
 
 import (
-	"bufio"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -33,25 +30,7 @@ func (g *GoXel) Run() {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	urls := g.URLs
-	if g.InputFile != "" {
-		file, err := os.Open(g.InputFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-
-		urls = make([]string, 0, 64)
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			urls = append(urls, scanner.Text())
-		}
-
-		if err := scanner.Err(); err != nil {
-			log.Fatal(err)
-		}
-	}
-
+	urls := BuildURLSlice(g.URLs, g.InputFile)
 	if len(urls) == 0 {
 		return
 	}
@@ -101,10 +80,7 @@ func (g *GoXel) Run() {
 
 	var totalBytes uint64
 	for _, f := range results {
-		if !f.Finished {
-			f.finish()
-		}
-
+		f.finish()
 		for i := 0; i < len(f.Chunks); i++ {
 			totalBytes += f.Chunks[i].Total - f.Chunks[i].Initial
 		}

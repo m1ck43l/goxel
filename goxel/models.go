@@ -57,6 +57,10 @@ func (f *File) setOutput(directory string) {
 }
 
 func (f *File) writeMetadata() {
+	if f.Finished {
+		return
+	}
+
 	f.Valid = true
 	f.Offset = 8 + uint64(len(f.Chunks))*uint64(unsafe.Sizeof(Chunk{}))
 
@@ -80,6 +84,9 @@ func (f *File) writeMetadata() {
 }
 
 func (f *File) finish() {
+	if f.Finished {
+		return
+	}
 	f.Finished = true
 
 	fin, err := os.Open(f.OutputWork)
@@ -105,6 +112,108 @@ func (f *File) finish() {
 	}
 
 	_ = os.Remove(f.OutputWork)
+}
+
+// UpdateStatus returns the current status of the download
+// The first returned value is the progress percentage
+// The second returned value is the number of active connections for this file
+// The third returned value is the number of bytes downloaded
+func (f *File) UpdateStatus() (float64, uint64, uint64) {
+	var done, total, conn uint64
+	for i := 0; i < len(f.Chunks); i++ {
+		v := f.Chunks[i]
+		done += v.Done
+		total += v.Total
+
+		if v.Done < v.Total && v.Done > v.Initial {
+			conn++
+		}
+	}
+
+	if !f.Finished {
+		if done >= total && done > 0 {
+			f.finish()
+		}
+
+		if done > 0 && f.OutputWork != "" {
+			f.writeMetadata()
+		}
+	}
+
+	var ratio float64
+	if total > 0 {
+		ratio = float64(done) / float64(total) * 100
+	}
+
+	return ratio, conn, done
+}
+
+// ResumeChunks tries to resume the current download by checking if the file exists and is valid
+func (f *File) ResumeChunks() bool {
+	if _, err := os.Stat(f.OutputWork); !os.IsNotExist(err) {
+		var initial []Chunk
+
+		file, err := os.Open(f.OutputWork)
+		defer file.Close()
+		if err == nil {
+			// Read initial number of chunks
+			rbytes := make([]byte, 8)
+			_, err := file.Read(rbytes)
+			if err != nil {
+				log.Printf(err.Error())
+				return false
+			}
+
+			var initialSize uint64
+			buf := bytes.NewBuffer(rbytes)
+			err = binary.Read(buf, binary.BigEndian, &initialSize)
+			if err != nil {
+				log.Printf(err.Error())
+				return false
+			}
+
+			initial = make([]Chunk, initialSize, initialSize)
+			for i := 0; uint64(i) < initialSize; i++ {
+				rbytes = make([]byte, unsafe.Sizeof(Chunk{}))
+				_, err := file.Read(rbytes)
+				if err != nil {
+					log.Printf(err.Error())
+					return false
+				}
+
+				initial[i] = Chunk{}
+				buf := bytes.NewBuffer(rbytes)
+				err = binary.Read(buf, binary.BigEndian, &initial[i])
+				if err != nil {
+					log.Printf(err.Error())
+					return false
+				}
+			}
+		} else {
+			log.Printf(err.Error())
+			return false
+		}
+
+		sort.SliceStable(initial, func(i, j int) bool {
+			return initial[i].Index < initial[j].Index
+		})
+
+		f.Chunks = make([]Chunk, len(initial), len(initial))
+		for i := 0; i < len(initial); i++ {
+			f.Chunks[i] = Chunk{
+				Start:   initial[i].Start,
+				End:     initial[i].End,
+				Index:   uint64(i),
+				Done:    initial[i].Done,
+				Total:   initial[i].Total,
+				Initial: initial[i].Done,
+			}
+		}
+
+		return true
+	}
+
+	return false
 }
 
 // BuildChunks builds the Chunks slice for each part of the file to be downloaded
@@ -148,61 +257,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 	}
 	contentLength, _ := strconv.ParseUint(rawContentLength[0], 10, 64)
 
-	if _, err := os.Stat(f.OutputWork); !os.IsNotExist(err) {
-		var initial []Chunk
-
-		file, err := os.Open(f.OutputWork)
-		defer file.Close()
-		if err == nil {
-			// Read initial number of chunks
-			rbytes := make([]byte, 8)
-			_, err := file.Read(rbytes)
-			if err != nil {
-				log.Printf(err.Error())
-			}
-
-			var initialSize uint64
-			buf := bytes.NewBuffer(rbytes)
-			err = binary.Read(buf, binary.BigEndian, &initialSize)
-			if err != nil {
-				log.Printf(err.Error())
-			}
-
-			initial = make([]Chunk, initialSize, initialSize)
-			for i := 0; uint64(i) < initialSize; i++ {
-				rbytes = make([]byte, unsafe.Sizeof(Chunk{}))
-				_, err := file.Read(rbytes)
-				if err != nil {
-					log.Printf(err.Error())
-				}
-
-				initial[i] = Chunk{}
-				buf := bytes.NewBuffer(rbytes)
-				err = binary.Read(buf, binary.BigEndian, &initial[i])
-				if err != nil {
-					log.Printf(err.Error())
-				}
-			}
-		} else {
-			log.Printf(err.Error())
-		}
-
-		sort.SliceStable(initial, func(i, j int) bool {
-			return initial[i].Index < initial[j].Index
-		})
-
-		f.Chunks = make([]Chunk, len(initial), len(initial))
-		for i := 0; i < len(initial); i++ {
-			f.Chunks[i] = Chunk{
-				Start:   initial[i].Start,
-				End:     initial[i].End,
-				Index:   uint64(i),
-				Done:    initial[i].Done,
-				Total:   initial[i].Total,
-				Initial: initial[i].Done,
-			}
-		}
-	} else {
+	if resume := f.ResumeChunks(); !resume {
 		if !acceptRangesOk || len(acceptRanges) == 0 || acceptRanges[0] != "bytes" {
 			f.Chunks = make([]Chunk, 1, 1)
 

@@ -1,7 +1,10 @@
 package goxel
 
 import (
+	"bufio"
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -33,4 +36,27 @@ func (s *StandardURLPreprocessor) process(urls []string) []string {
 		output = append(output, nURL)
 	}
 	return output
+}
+
+// BuildURLSlice builds the initial URLs list containing URLs from command line and input file
+func BuildURLSlice(urls []string, inputFile string) []string {
+	if inputFile != "" {
+		file, err := os.Open(inputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		urls = make([]string, 0, 64)
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			urls = append(urls, scanner.Text())
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return urls
 }
