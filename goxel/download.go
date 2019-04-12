@@ -50,7 +50,7 @@ func DownloadWorker(wg *sync.WaitGroup, chunks chan download) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode > 399 {
-			fmt.Printf("An HTTP error occured: status %v", resp.StatusCode)
+			fmt.Printf("An HTTP error occurred: status %v", resp.StatusCode)
 			continue
 		}
 

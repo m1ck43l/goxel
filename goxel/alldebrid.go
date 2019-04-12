@@ -79,7 +79,7 @@ func (s *AllDebridURLPreprocessor) initialize() {
 	s.Client = &http.Client{}
 	req, err := s.Client.Get(api + "/user/login?agent=" + agent + "&username=" + s.Login + "&password=" + s.Password)
 	if err != nil {
-		fmt.Printf("[ERROR] Following error occured while connecting to AllDebrid service: %v\n", err.Error())
+		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())
 		return
 	}
 	defer req.Body.Close()
@@ -89,12 +89,12 @@ func (s *AllDebridURLPreprocessor) initialize() {
 	var resp LoginResponse
 	err = json.Unmarshal(b, &resp)
 	if err != nil {
-		fmt.Printf("[ERROR] Following error occured while connecting to AllDebrid service: %v\n", err.Error())
+		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())
 		return
 	}
 
 	if !resp.Success {
-		fmt.Printf("[ERROR] Following error occured while connecting to AllDebrid service: %v\n", errors[resp.Error])
+		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", errors[resp.Error])
 		return
 	}
 
@@ -148,7 +148,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 			if v.Match([]byte(url)) {
 				req, err := s.Client.Get(api + "/link/unlock?agent=" + agent + "&token=" + s.Token + "&link=" + url)
 				if err != nil {
-					fmt.Printf("[ERROR] An error occured while debriding [%v]: %v\n", url, err.Error())
+					fmt.Printf("[ERROR] An error occurred while debriding [%v]: %v\n", url, err.Error())
 					continue
 				}
 				defer req.Body.Close()
@@ -158,7 +158,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 				var resp LinkResponse
 				err = json.Unmarshal(b, &resp)
 				if err != nil {
-					fmt.Printf("[ERROR] An error occured while debriding [%v]: %v\n", url, err.Error())
+					fmt.Printf("[ERROR] An error occurred while debriding [%v]: %v\n", url, err.Error())
 					continue
 				}
 

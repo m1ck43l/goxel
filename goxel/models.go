@@ -119,7 +119,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 
 	req, err := http.NewRequest("HEAD", f.URL, nil)
 	if err != nil {
-		f.Error = fmt.Sprintf("An error occured: %v", err.Error())
+		f.Error = fmt.Sprintf("An error occurred: %v", err.Error())
 		return
 	}
 
@@ -129,13 +129,13 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 
 	head, err := client.Do(req)
 	if err != nil {
-		f.Error = fmt.Sprintf("An error occured: %v", err.Error())
+		f.Error = fmt.Sprintf("An error occurred: %v", err.Error())
 		return
 	}
 	defer head.Body.Close()
 
 	if head.StatusCode > 399 {
-		f.Error = fmt.Sprintf("An HTTP error occured: status %v", head.StatusCode)
+		f.Error = fmt.Sprintf("An HTTP error occurred: status %v", head.StatusCode)
 		return
 	}
 
