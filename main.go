@@ -45,6 +45,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageMsg)
 		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nVisit https://github.com/m1ck43l/goxel/issues to report bugs.\n")
 	}
 	flag.Parse()
 	urls := flag.Args()
