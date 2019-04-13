@@ -76,7 +76,7 @@ const (
 )
 
 func (s *AllDebridURLPreprocessor) initialize() {
-	s.Client = &http.Client{}
+	s.Client = NewClient()
 	req, err := s.Client.Get(api + "/user/login?agent=" + agent + "&username=" + s.Login + "&password=" + s.Password)
 	if err != nil {
 		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())

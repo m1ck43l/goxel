@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -10,7 +12,7 @@ import (
 )
 
 const (
-	version         = 0.4
+	version         = 0.5
 	usageMsg string = "goxel [options] [url1] [url2] [url...]\n"
 )
 
@@ -26,6 +28,8 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 func main() {
+	log.SetOutput(ioutil.Discard)
+
 	nbrPerFile := flag.Int("max-conn-file", 4, "Max number of connections per file")
 	nbrConnexion := flag.Int("max-conn", 8, "Max number of connections")
 	inputFile := flag.String("file", "", "Links file")
@@ -33,6 +37,7 @@ func main() {
 	ignoreSSLVerification := flag.Bool("insecure", false, "Bypass SSL validation")
 	doNotOverrideOutputFile := flag.Bool("no-override", false, "Do not override existing file(s)")
 	quiet := flag.Bool("quiet", false, "No stdout output")
+	proxy := flag.String("proxy", "", "Proxy string: (http|https|socks5)://0.0.0.0:0000")
 
 	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username")
 	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password")
@@ -71,6 +76,7 @@ func main() {
 		MaxConnectionsPerFile:   *nbrPerFile,
 		DoNotOverrideOutputFile: *doNotOverrideOutputFile,
 		Quiet:                   *quiet,
+		Proxy:                   *proxy,
 		AlldebridLogin:          *alldebridLogin,
 		AlldebridPassword:       *alldebridPassword,
 	}
