@@ -44,8 +44,12 @@ goxel [options] [url1] [url2] [url...]
         Do not override existing file(s)
   -output string
         Output directory
+  -quiet
+        No stdout output
   -version
         Version
+
+Visit https://github.com/m1ck43l/goxel/issues to report bugs.
 ```
 
 ## Contributing
