@@ -11,12 +11,13 @@ import (
 )
 
 var headers map[string]string
+var proxyURL string
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 type GoXel struct {
 	AlldebridLogin, AlldebridPassword                     string
 	IgnoreSSLVerification, DoNotOverrideOutputFile, Quiet bool
-	OutputDirectory, InputFile                            string
+	OutputDirectory, InputFile, Proxy                     string
 	MaxConnections, MaxConnectionsPerFile                 int
 	Headers                                               map[string]string
 	URLs                                                  []string
@@ -25,6 +26,7 @@ type GoXel struct {
 // Run starts the downloading process
 func (g *GoXel) Run() {
 	headers = g.Headers
+	proxyURL = g.Proxy
 
 	if g.IgnoreSSLVerification {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}

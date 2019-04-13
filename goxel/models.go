@@ -230,7 +230,7 @@ func (f *File) ResumeChunks() bool {
 func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile int) {
 	defer wg.Done()
 
-	client := &http.Client{}
+	client := NewClient()
 
 	req, err := http.NewRequest("HEAD", f.URL, nil)
 	if err != nil {

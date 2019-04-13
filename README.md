@@ -44,6 +44,8 @@ goxel [options] [url1] [url2] [url...]
         Do not override existing file(s)
   -output string
         Output directory
+  -proxy string
+        Proxy string: (http|https|socks5)://0.0.0.0:0000
   -quiet
         No stdout output
   -version

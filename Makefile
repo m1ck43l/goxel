@@ -11,6 +11,7 @@ $(OUTPUT)/goxel: $(SOURCES)
 
 deps:
 	$(GOGET) github.com/dustin/go-humanize
+	$(GOGET) golang.org/x/net/proxy
 
 clean:
 	$(GO) clean -x
