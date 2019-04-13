@@ -4,6 +4,8 @@
 
 *GoXel - download accelerator written in Go*
 
+<img src="https://user-images.githubusercontent.com/918212/56085358-14b88400-5e42-11e9-8610-ee7db8b16827.png" width="300">
+
 GoXel is a Go package for faster downloads from the internet:
 
 * Monitor download progress
