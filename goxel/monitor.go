@@ -2,6 +2,7 @@ package goxel
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -16,38 +17,31 @@ type monitor struct {
 }
 
 // Monitoring monitors the current downloads and display the speed and progress for each files
-func Monitoring(files []*File, done chan bool) {
+func Monitoring(files []*File, done chan bool, quiet bool) {
 	monitors := make([]monitor, monitorCount, monitorCount)
 
 	var count, pDone, gDone uint64
+	var output []string
+
 	lastStart := time.Now()
 
-	move := 0
 	for {
 		select {
 		default:
 			gDone = 0
 
-			if count > 0 {
-				fmt.Printf(strings.Repeat("\033[F", move))
-			}
-			fmt.Printf("\r")
+			move := math.Max(float64(len(output)-1), 0)
+			output = make([]string, 0)
+			output = append(output, fmt.Sprintf(strings.Repeat("\033[F", int(move)))+"\r")
 
-			if count == 0 {
-				fmt.Printf("\n")
-			}
-
-			move = 0
 			for idx, f := range files {
 				if f.Error == "" {
-					fmt.Printf("[%3d] - %-120v\n", idx, f.Output)
+					output = append(output, fmt.Sprintf("[%3d] - %-120v", idx, f.Output))
 				} else {
-					fmt.Printf("[ERR] - %v: %v\n", f.Output, f.Error)
+					output = append(output, fmt.Sprintf("[ERR] - %v: %v", f.Output, f.Error))
 				}
-				move++
 			}
-			fmt.Printf("\n")
-			move++
+			output = append(output, "")
 
 			var curDone uint64
 			var curDelay time.Duration
@@ -58,9 +52,8 @@ func Monitoring(files []*File, done chan bool) {
 
 			speed := uint64(float64(curDone) / (float64(curDelay/time.Nanosecond) / 1000000000))
 
-			fmt.Printf("Download speed: %8v/s\n", humanize.Bytes(speed))
-			fmt.Printf("\n")
-			move += 2
+			output = append(output, fmt.Sprintf("Download speed: %8v/s", humanize.Bytes(speed)))
+			output = append(output, "")
 
 			for idx, f := range files {
 				if !f.Valid {
@@ -69,11 +62,11 @@ func Monitoring(files []*File, done chan bool) {
 
 				ratio, conn, done := f.UpdateStatus()
 
-				fmt.Printf("[%3d] - [%6.2f%%] [%-101v] (%d/%d)\n", idx, ratio, strings.Repeat("=", int(ratio))+">", conn, len(f.Chunks))
-				move++
+				output = append(output, fmt.Sprintf("[%3d] - [%6.2f%%] [%-101v] (%d/%d)", idx, ratio, strings.Repeat("=", int(ratio))+">", conn, len(f.Chunks)))
 
 				gDone += done
 			}
+			output = append(output, "")
 
 			monitors[count%monitorCount] = monitor{
 				Duration: time.Since(lastStart),
@@ -82,6 +75,10 @@ func Monitoring(files []*File, done chan bool) {
 			count++
 			pDone = gDone
 			lastStart = time.Now()
+
+			if !quiet {
+				fmt.Print(strings.Join(output, "\n"))
+			}
 
 			time.Sleep(100 * time.Millisecond)
 

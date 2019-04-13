@@ -32,6 +32,7 @@ func main() {
 	outputDirectory := flag.String("output", "", "Output directory")
 	ignoreSSLVerification := flag.Bool("insecure", false, "Bypass SSL validation")
 	doNotOverrideOutputFile := flag.Bool("no-override", false, "Do not override existing file(s)")
+	quiet := flag.Bool("quiet", false, "No stdout output")
 
 	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username")
 	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password")
@@ -68,6 +69,7 @@ func main() {
 		MaxConnections:          *nbrConnexion,
 		MaxConnectionsPerFile:   *nbrPerFile,
 		DoNotOverrideOutputFile: *doNotOverrideOutputFile,
+		Quiet:                   *quiet,
 		AlldebridLogin:          *alldebridLogin,
 		AlldebridPassword:       *alldebridPassword,
 	}

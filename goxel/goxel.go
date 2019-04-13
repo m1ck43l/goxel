@@ -14,12 +14,12 @@ var headers map[string]string
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 type GoXel struct {
-	AlldebridLogin, AlldebridPassword              string
-	IgnoreSSLVerification, DoNotOverrideOutputFile bool
-	OutputDirectory, InputFile                     string
-	MaxConnections, MaxConnectionsPerFile          int
-	Headers                                        map[string]string
-	URLs                                           []string
+	AlldebridLogin, AlldebridPassword                     string
+	IgnoreSSLVerification, DoNotOverrideOutputFile, Quiet bool
+	OutputDirectory, InputFile                            string
+	MaxConnections, MaxConnectionsPerFile                 int
+	Headers                                               map[string]string
+	URLs                                                  []string
 }
 
 // Run starts the downloading process
@@ -71,7 +71,7 @@ func (g *GoXel) Run() {
 		wg.Add(1)
 		go DownloadWorker(&wg, chunks)
 	}
-	go Monitoring(results, done)
+	go Monitoring(results, done, g.Quiet)
 
 	wgP.Wait()
 	close(chunks)
@@ -89,5 +89,7 @@ func (g *GoXel) Run() {
 		}
 	}
 
-	fmt.Printf("\nDownloaded %s in %s [%s/s]\n", humanize.Bytes(totalBytes), time.Since(start), humanize.Bytes(uint64(float64(totalBytes)/(float64(time.Since(start)/time.Nanosecond)/1000000000))))
+	if !g.Quiet {
+		fmt.Printf("\nDownloaded %s in %s [%s/s]\n", humanize.Bytes(totalBytes), time.Since(start), humanize.Bytes(uint64(float64(totalBytes)/(float64(time.Since(start)/time.Nanosecond)/1000000000))))
+	}
 }
