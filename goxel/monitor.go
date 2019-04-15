@@ -69,8 +69,20 @@ func Monitoring(files []*File, done chan bool, quiet bool) {
 
 				progress := ""
 				for i, chunk := range f.Chunks {
-					cInitial := int(float64(chunk.Initial) / float64(chunk.Total) * c)
-					cRemaining := int(math.Max(float64(chunk.Total-chunk.Done)/float64(chunk.Total)*c, 0))
+					var cInitial int
+					if chunk.Initial == 0 {
+						cInitial = 0
+					} else {
+						cInitial = int(math.Min(float64(chunk.Initial)/float64(chunk.Total)*c, c-1))
+					}
+
+					var cRemaining int
+					if chunk.Done >= chunk.Total {
+						cRemaining = 0
+					} else {
+						cRemaining = int(math.Min(math.Max(float64(chunk.Total-chunk.Done)/float64(chunk.Total)*c, 0), c-1))
+					}
+
 					cDone := int(math.Max(float64(int(c)-cInitial-cRemaining-1), 0))
 
 					progress += fmt.Sprintf("%v%v%d%v", strings.Repeat("+", cInitial), strings.Repeat("-", cDone), i, strings.Repeat(" ", cRemaining))
