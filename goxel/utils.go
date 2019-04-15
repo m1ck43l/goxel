@@ -16,7 +16,7 @@ func NewClient() *http.Client {
 	client := &http.Client{}
 
 	if proxyURL != "" {
-		re := regexp.MustCompile(`^(http|https|socks)://`)
+		re := regexp.MustCompile(`^(http|https|socks5)://`)
 		protocol := re.Find([]byte(proxyURL))
 
 		if protocol != nil {
@@ -33,7 +33,7 @@ func NewClient() *http.Client {
 				}
 
 			} else if string(protocol) == "socks5://" {
-				dialer, err := proxy.SOCKS5("tcp", strings.Replace(proxyURL, "socks://", "", 1), nil, proxy.Direct)
+				dialer, err := proxy.SOCKS5("tcp", strings.Replace(proxyURL, "socks5://", "", 1), nil, proxy.Direct)
 				if err != nil {
 					fmt.Printf("[WARN] Invalid proxy URL, bypassing, %v\n", err.Error())
 				} else {
