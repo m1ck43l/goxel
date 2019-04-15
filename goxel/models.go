@@ -40,7 +40,7 @@ type File struct {
 	Offset                  uint64
 }
 
-func (f *File) setOutput(directory string, doNotOverrideOutputFile bool) bool {
+func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
 	if directory != "" {
 		err := os.MkdirAll(directory, 0755)
 		if err != nil {
@@ -53,13 +53,23 @@ func (f *File) setOutput(directory string, doNotOverrideOutputFile bool) bool {
 		f.Output = path.Base(f.URL)
 	}
 
-	if _, err := os.Stat(f.Output); !os.IsNotExist(err) && doNotOverrideOutputFile {
-		return false
+	initialOutput := f.Output
+
+	idx := -1
+	for {
+		if _, err := os.Stat(f.Output); !os.IsNotExist(err) {
+			if idx == -1 && OverwriteOutputFile {
+				break
+			} else {
+				idx++
+				f.Output = initialOutput + "." + strconv.Itoa(idx)
+			}
+		} else {
+			break
+		}
 	}
 
 	f.OutputWork = f.Output + "." + workExtension
-
-	return true
 }
 
 func (f *File) writeMetadata() {

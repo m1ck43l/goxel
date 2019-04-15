@@ -19,12 +19,12 @@ var proxyURL string
 // - GOXEL_ALLDEBRID_USERNAME
 // - GOXEL_ALLDEBRID_PASSWD
 type GoXel struct {
-	AlldebridLogin, AlldebridPassword                     string
-	IgnoreSSLVerification, DoNotOverrideOutputFile, Quiet bool
-	OutputDirectory, InputFile, Proxy                     string
-	MaxConnections, MaxConnectionsPerFile                 int
-	Headers                                               map[string]string
-	URLs                                                  []string
+	AlldebridLogin, AlldebridPassword                 string
+	IgnoreSSLVerification, OverwriteOutputFile, Quiet bool
+	OutputDirectory, InputFile, Proxy                 string
+	MaxConnections, MaxConnectionsPerFile             int
+	Headers                                           map[string]string
+	URLs                                              []string
 }
 
 // Run starts the downloading process
@@ -68,10 +68,7 @@ func (g *GoXel) Run() {
 			URL: url,
 		}
 
-		if ok := file.setOutput(g.OutputDirectory, g.DoNotOverrideOutputFile); !ok {
-			file.Error = "File already exists"
-			continue
-		}
+		file.setOutput(g.OutputDirectory, g.OverwriteOutputFile)
 
 		wgP.Add(1)
 		go file.BuildChunks(&wgP, chunks, g.MaxConnectionsPerFile)
