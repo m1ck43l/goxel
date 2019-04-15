@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	version         = 0.6
+	version         = 0.7
 	usageMsg string = "goxel [options] [url1] [url2] [url...]\n"
 )
 
