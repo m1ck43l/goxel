@@ -27,9 +27,9 @@ Make will create the goxel executable in the bin directory
 $ bin/goxel -h
 goxel [options] [url1] [url2] [url...]
   -alldebrid-password string
-        Alldebrid password
+        Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable
   -alldebrid-username string
-        Alldebrid username
+        Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable
   -file string
         Links file
   -header value

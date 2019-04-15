@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -14,6 +15,9 @@ var headers map[string]string
 var proxyURL string
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
+// Credentials can either be passed in command line arguments or using the following environment variables:
+// - GOXEL_ALLDEBRID_USERNAME
+// - GOXEL_ALLDEBRID_PASSWD
 type GoXel struct {
 	AlldebridLogin, AlldebridPassword                     string
 	IgnoreSSLVerification, DoNotOverrideOutputFile, Quiet bool
@@ -38,8 +42,16 @@ func (g *GoXel) Run() {
 	}
 
 	urlPreprocessors := []URLPreprocessor{&StandardURLPreprocessor{}}
-	if g.AlldebridLogin != "" && g.AlldebridPassword != "" {
-		urlPreprocessors = append(urlPreprocessors, &AllDebridURLPreprocessor{Login: g.AlldebridLogin, Password: g.AlldebridPassword})
+	if g.AlldebridLogin != "" && g.AlldebridPassword != "" || os.Getenv("GOXEL_ALLDEBRID_USERNAME") != "" && os.Getenv("GOXEL_ALLDEBRID_PASSWD") != "" {
+		var login, password string
+		if g.AlldebridLogin != "" {
+			login = g.AlldebridLogin
+			password = g.AlldebridPassword
+		} else {
+			login = os.Getenv("GOXEL_ALLDEBRID_USERNAME")
+			password = os.Getenv("GOXEL_ALLDEBRID_PASSWD")
+		}
+		urlPreprocessors = append(urlPreprocessors, &AllDebridURLPreprocessor{Login: login, Password: password})
 	}
 
 	for _, up := range urlPreprocessors {

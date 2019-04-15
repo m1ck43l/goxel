@@ -39,8 +39,8 @@ func main() {
 	quiet := flag.Bool("quiet", false, "No stdout output")
 	proxy := flag.String("proxy", "", "Proxy string: (http|https|socks5)://0.0.0.0:0000")
 
-	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username")
-	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password")
+	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable")
+	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable")
 
 	versionFlag := flag.Bool("version", false, "Version")
 
