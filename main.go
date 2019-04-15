@@ -35,7 +35,7 @@ func main() {
 	inputFile := flag.String("file", "", "Links file")
 	outputDirectory := flag.String("output", "", "Output directory")
 	ignoreSSLVerification := flag.Bool("insecure", false, "Bypass SSL validation")
-	doNotOverrideOutputFile := flag.Bool("no-override", false, "Do not override existing file(s)")
+	overwriteOutputFile := flag.Bool("overwrite", false, "Overwrite existing file(s)")
 	quiet := flag.Bool("quiet", false, "No stdout output")
 	proxy := flag.String("proxy", "", "Proxy string: (http|https|socks5)://0.0.0.0:0000")
 
@@ -67,18 +67,18 @@ func main() {
 	}
 
 	goxel := goxel.GoXel{
-		URLs:                    urls,
-		Headers:                 headers,
-		IgnoreSSLVerification:   *ignoreSSLVerification,
-		OutputDirectory:         *outputDirectory,
-		InputFile:               *inputFile,
-		MaxConnections:          *nbrConnexion,
-		MaxConnectionsPerFile:   *nbrPerFile,
-		DoNotOverrideOutputFile: *doNotOverrideOutputFile,
-		Quiet:                   *quiet,
-		Proxy:                   *proxy,
-		AlldebridLogin:          *alldebridLogin,
-		AlldebridPassword:       *alldebridPassword,
+		URLs:                  urls,
+		Headers:               headers,
+		IgnoreSSLVerification: *ignoreSSLVerification,
+		OutputDirectory:       *outputDirectory,
+		InputFile:             *inputFile,
+		MaxConnections:        *nbrConnexion,
+		MaxConnectionsPerFile: *nbrPerFile,
+		OverwriteOutputFile:   *overwriteOutputFile,
+		Quiet:                 *quiet,
+		Proxy:                 *proxy,
+		AlldebridLogin:        *alldebridLogin,
+		AlldebridPassword:     *alldebridPassword,
 	}
 	goxel.Run()
 }
