@@ -77,7 +77,13 @@ func Monitoring(files []*File, done chan bool, quiet bool) {
 			lastStart = time.Now()
 
 			if !quiet {
-				fmt.Print(strings.Join(output, "\n"))
+				for _, s := range output {
+					if s == "" {
+						fmt.Printf("%v", strings.Repeat(" ", int(getWidth())))
+					} else {
+						fmt.Print(s + "\n")
+					}
+				}
 			}
 
 			time.Sleep(100 * time.Millisecond)
