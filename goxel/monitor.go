@@ -62,7 +62,31 @@ func Monitoring(files []*File, done chan bool, quiet bool) {
 
 				ratio, conn, done := f.UpdateStatus()
 
-				output = append(output, fmt.Sprintf("[%3d] - [%6.2f%%] [%-101v] (%d/%d)", idx, ratio, strings.Repeat("=", int(ratio))+">", conn, len(f.Chunks)))
+				left := fmt.Sprintf("[%3d] - [%6.2f%%] [", idx, ratio)
+				right := fmt.Sprintf("] (%d/%d)", conn, len(f.Chunks))
+
+				c := float64(int(float64(int(getWidth())-len(left)-len(right)) / float64(len(f.Chunks))))
+
+				progress := ""
+				for i, chunk := range f.Chunks {
+					offset := float64(len(fmt.Sprintf("%d", i)))
+
+					var cInitial int
+					if chunk.Initial > 0 {
+						cInitial = int(math.Min(float64(chunk.Initial)/float64(chunk.Total)*c, c-offset))
+					}
+
+					var cRemaining int
+					if chunk.Done < chunk.Total {
+						cRemaining = int(math.Min(math.Max(float64(chunk.Total-chunk.Done)/float64(chunk.Total)*c, 0), c-offset))
+					}
+
+					cDone := int(math.Max(float64(int(c)-cInitial-cRemaining-int(offset)), 0))
+
+					progress += fmt.Sprintf("%v%v%d%v", strings.Repeat("+", cInitial), strings.Repeat("-", cDone), i, strings.Repeat(" ", cRemaining))
+				}
+
+				output = append(output, left+progress+right)
 
 				gDone += done
 			}
