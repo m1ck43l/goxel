@@ -17,6 +17,9 @@ clean:
 	$(GO) clean -x
 	rm -rf $(OUTPUT)/goxel
 
+test:
+	cd goxel && $(GO) test
+
 install:
 	$(GO) install -v .
 

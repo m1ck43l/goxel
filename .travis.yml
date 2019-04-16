@@ -11,4 +11,4 @@ env:
   - GOARCH=amd64
   - GOARCH=386
 
-script: make deps all
+script: make deps all test
