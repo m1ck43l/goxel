@@ -86,6 +86,8 @@ func TestRunOneFile(t *testing.T) {
 	goxel.Run()
 
 	filename := path.Join(output, "25MB")
+	defer os.Remove(filename + ".0")
+
 	hash, _ := computeMD5(filename + ".0")
 	if hash == hashes[filename] {
 		t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
@@ -108,6 +110,33 @@ func TestRunMultipleFiles(t *testing.T) {
 
 	for _, suffix := range []string{"25MB", "30MB", "50MB"} {
 		filename := path.Join(output, suffix)
+		defer os.Remove(filename + ".0")
+
+		hash, _ := computeMD5(filename + ".0")
+		if hash == hashes[filename] {
+			t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
+		}
+	}
+}
+
+func TestSingleConnection(t *testing.T) {
+	goxel := GoXel{
+		URLs:                  []string{"http://" + host + ":" + port + "/25MB", "http://" + host + ":" + port + "/30MB"},
+		Headers:               map[string]string{},
+		IgnoreSSLVerification: false,
+		OutputDirectory:       output,
+		InputFile:             "",
+		MaxConnections:        1,
+		MaxConnectionsPerFile: 1,
+		OverwriteOutputFile:   false,
+		Quiet:                 true,
+	}
+	goxel.Run()
+
+	for _, suffix := range []string{"25MB", "30MB"} {
+		filename := path.Join(output, suffix)
+		defer os.Remove(filename + ".0")
+
 		hash, _ := computeMD5(filename + ".0")
 		if hash == hashes[filename] {
 			t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
