@@ -2,6 +2,7 @@ package goxel
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -61,6 +63,16 @@ func TestMain(m *testing.M) {
 
 		hashes[filename], _ = computeMD5(filename)
 	}
+
+	http.HandleFunc("/img", func(w http.ResponseWriter, r *http.Request) {
+		data := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEX/TQBcNTh/AAAACklEQVR4nGNiAAAABgADNjd8qAAAAABJRU5ErkJggg=="
+		dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data))
+		w.Header().Set("Content-Type", "image/png")
+
+		if r.Header.Get("User-Agent") == "GoXel" {
+			io.Copy(w, dec)
+		}
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, path.Join(dir, r.URL.Path[1:]))
@@ -141,5 +153,75 @@ func TestSingleConnection(t *testing.T) {
 		if hash == hashes[filename] {
 			t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
 		}
+	}
+}
+
+func TestOverwrite(t *testing.T) {
+	goxel := GoXel{
+		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
+		Headers:               map[string]string{},
+		IgnoreSSLVerification: false,
+		OutputDirectory:       path.Join(output, "test"),
+		InputFile:             "",
+		MaxConnections:        4,
+		MaxConnectionsPerFile: 4,
+		OverwriteOutputFile:   true,
+		Quiet:                 true,
+	}
+	goxel.Run()
+
+	filename := path.Join(output, "test", "25MB")
+
+	hash, _ := computeMD5(filename)
+	if hash == hashes[filename] {
+		t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
+	}
+
+	goxel = GoXel{
+		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
+		Headers:               map[string]string{},
+		IgnoreSSLVerification: false,
+		OutputDirectory:       path.Join(output, "test"),
+		InputFile:             "",
+		MaxConnections:        4,
+		MaxConnectionsPerFile: 4,
+		OverwriteOutputFile:   true,
+		Quiet:                 true,
+	}
+	goxel.Run()
+
+	if _, err := os.Stat(filename + ".0"); !os.IsNotExist(err) {
+		t.Error("File not overwritten")
+	}
+
+	hash, _ = computeMD5(filename)
+	if hash == hashes[filename] {
+		t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
+	}
+}
+
+func TestNoRange(t *testing.T) {
+	goxel := GoXel{
+		URLs:                  []string{"http://" + host + ":" + port + "/img"},
+		Headers:               map[string]string{"User-Agent": "GoXel"},
+		IgnoreSSLVerification: false,
+		OutputDirectory:       output,
+		InputFile:             "",
+		MaxConnections:        4,
+		MaxConnectionsPerFile: 4,
+		OverwriteOutputFile:   false,
+		Quiet:                 true,
+	}
+	goxel.Run()
+
+	filename := path.Join(output, "img")
+
+	hash, _ := computeMD5(filename)
+	if hash != "38c2ac6022f8ebf983bf5fadb1513b5c" {
+		t.Error("Invalid hash error")
+	}
+
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		t.Error("Download error")
 	}
 }
