@@ -22,7 +22,11 @@ type download struct {
 func DownloadWorker(wg *sync.WaitGroup, chunks chan download) {
 	defer wg.Done()
 
-	client := NewClient()
+	client, err := NewClient()
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+
 	for {
 		download, more := <-chunks
 		if !more {

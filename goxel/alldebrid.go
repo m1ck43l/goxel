@@ -8,7 +8,7 @@ import (
 	"regexp"
 )
 
-var errors = map[int]string{
+var aderrors = map[int]string{
 	1:  "Invalid token",
 	2:  "Invalid user or password",
 	3:  "Geolock protection active, please login from the website",
@@ -76,7 +76,7 @@ const (
 )
 
 func (s *AllDebridURLPreprocessor) initialize() {
-	s.Client = NewClient()
+	s.Client, _ = NewClient()
 	req, err := s.Client.Get(api + "/user/login?agent=" + agent + "&username=" + s.Login + "&password=" + s.Password)
 	if err != nil {
 		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())
@@ -94,7 +94,7 @@ func (s *AllDebridURLPreprocessor) initialize() {
 	}
 
 	if !resp.Success {
-		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", errors[resp.Error])
+		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", aderrors[resp.Error])
 		return
 	}
 
@@ -163,7 +163,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 				}
 
 				if !resp.Success {
-					fmt.Printf("[ERROR] Ignoring [%v] due to an error: %v\n", url, errors[resp.Error])
+					fmt.Printf("[ERROR] Ignoring [%v] due to an error: %v\n", url, aderrors[resp.Error])
 				} else {
 					output = append(output, resp.Infos.Link)
 				}

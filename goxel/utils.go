@@ -1,6 +1,7 @@
 package goxel
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -34,7 +35,7 @@ func getWidth() uint {
 
 // NewClient returns a HTTP client with the requested configuration
 // It supports HTTP and SOCKS proxies
-func NewClient() *http.Client {
+func NewClient() (*http.Client, error) {
 	client := &http.Client{}
 
 	if proxyURL != "" {
@@ -46,25 +47,24 @@ func NewClient() *http.Client {
 
 			if string(protocol) == "http://" || string(protocol) == "https://" {
 				pURL, err := url.Parse(proxyURL)
+				fmt.Println(pURL)
 				if err != nil {
-					fmt.Printf("[WARN] Invalid proxy URL, bypassing.\n")
-				} else {
-					transport = &http.Transport{
-						Proxy: http.ProxyURL(pURL),
-					}
+					return client, errors.New("Invalid proxy URL")
 				}
 
+				transport = &http.Transport{
+					Proxy: http.ProxyURL(pURL),
+				}
 			} else if string(protocol) == "socks5://" {
 				dialer, err := proxy.SOCKS5("tcp", strings.Replace(proxyURL, "socks5://", "", 1), nil, proxy.Direct)
 				if err != nil {
-					fmt.Printf("[WARN] Invalid proxy URL, bypassing, %v\n", err.Error())
-				} else {
-					transport = &http.Transport{
-						Dial: dialer.Dial,
-					}
+					return client, errors.New("Invalid proxy URL")
+				}
+				transport = &http.Transport{
+					Dial: dialer.Dial,
 				}
 			} else {
-				fmt.Printf("[WARN] Invalid proxy URL, unsupported protocol\n")
+				return client, errors.New("Invalid proxy protocol")
 			}
 
 			if transport != nil {
@@ -73,10 +73,10 @@ func NewClient() *http.Client {
 				}
 			}
 		} else {
-			fmt.Printf("[WARN] Invalid proxy URL, bypassing.\n")
+			return client, errors.New("Invalid proxy URL")
 		}
 
 	}
 
-	return client
+	return client, nil
 }
