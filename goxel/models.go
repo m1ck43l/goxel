@@ -100,7 +100,7 @@ func (f *File) writeMetadata() {
 }
 
 func (f *File) finish() {
-	if f.Finished {
+	if f.Finished || f.Error != "" {
 		return
 	}
 	f.Finished = true
@@ -108,12 +108,14 @@ func (f *File) finish() {
 	fin, err := os.Open(f.OutputWork)
 	if err != nil {
 		fmt.Printf("[ERROR] Error finalizing download: %v\n", err.Error())
+		return
 	}
 	defer fin.Close()
 
 	fout, err := os.Create(f.Output)
 	if err != nil {
 		fmt.Printf("[ERROR] Error finalizing download: %v\n", err.Error())
+		return
 	}
 	defer fout.Close()
 
