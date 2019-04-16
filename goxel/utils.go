@@ -2,7 +2,6 @@ package goxel
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -47,7 +46,6 @@ func NewClient() (*http.Client, error) {
 
 			if string(protocol) == "http://" || string(protocol) == "https://" {
 				pURL, err := url.Parse(proxyURL)
-				fmt.Println(pURL)
 				if err != nil {
 					return client, errors.New("Invalid proxy URL")
 				}
