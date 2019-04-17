@@ -68,6 +68,7 @@ type AllDebridURLPreprocessor struct {
 	Login, Password, Token string
 	Initialized, UseMe     bool
 	Domains                map[string]*regexp.Regexp
+	API                    string
 }
 
 const (
@@ -75,9 +76,15 @@ const (
 	agent = "goxel"
 )
 
-func (s *AllDebridURLPreprocessor) initialize() {
+func (s *AllDebridURLPreprocessor) initialize(url string) {
+	if url != "" {
+		s.API = url
+	} else {
+		s.API = api
+	}
+
 	s.Client, _ = NewClient()
-	req, err := s.Client.Get(api + "/user/login?agent=" + agent + "&username=" + s.Login + "&password=" + s.Password)
+	req, err := s.Client.Get(s.API + "/user/login?agent=" + agent + "&username=" + s.Login + "&password=" + s.Password)
 	if err != nil {
 		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())
 		return
@@ -108,7 +115,7 @@ func (s *AllDebridURLPreprocessor) initialize() {
 	s.Token = resp.Token
 	s.UseMe = true
 
-	req, err = s.Client.Get(api + "/hosts/regexp")
+	req, err = s.Client.Get(s.API + "/hosts/regexp")
 	if err != nil {
 		fmt.Printf("[ERROR] Can't retrieve hosts listing: %v\n", err.Error())
 		return
@@ -134,7 +141,7 @@ func (s *AllDebridURLPreprocessor) initialize() {
 
 func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 	if !s.Initialized {
-		s.initialize()
+		s.initialize("")
 	}
 
 	if !s.UseMe {
@@ -146,7 +153,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 		var found bool
 		for _, v := range s.Domains {
 			if v.Match([]byte(url)) {
-				req, err := s.Client.Get(api + "/link/unlock?agent=" + agent + "&token=" + s.Token + "&link=" + url)
+				req, err := s.Client.Get(s.API + "/link/unlock?agent=" + agent + "&token=" + s.Token + "&link=" + url)
 				if err != nil {
 					fmt.Printf("[ERROR] An error occurred while debriding [%v]: %v\n", url, err.Error())
 					continue
