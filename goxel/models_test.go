@@ -20,7 +20,7 @@ func TestResume(t *testing.T) {
 		Output:     path.Join(dir, "work.mp4"),
 		OutputWork: path.Join(dir, "work.mp4."+workExtension),
 		Chunks: []Chunk{
-			Chunk{
+			{
 				Start:   0,
 				End:     99,
 				Done:    0,
@@ -28,7 +28,7 @@ func TestResume(t *testing.T) {
 				Initial: 0,
 				Index:   0,
 			},
-			Chunk{
+			{
 				Start:   100,
 				End:     199,
 				Done:    0,
@@ -36,7 +36,7 @@ func TestResume(t *testing.T) {
 				Initial: 0,
 				Index:   1,
 			},
-			Chunk{
+			{
 				Start:   200,
 				End:     299,
 				Done:    0,
