@@ -80,6 +80,8 @@ func TestMain(m *testing.M) {
 
 	go http.ListenAndServe(":"+port, nil)
 
+	SetupAlldebridTest()
+
 	os.Exit(m.Run())
 }
 
