@@ -65,7 +65,7 @@ func DownloadWorker(wg *sync.WaitGroup, chunks chan download) {
 		}
 		defer out.Close()
 
-		out.Seek(int64(chunk.Start+chunk.Done+download.Offset), 0)
+		out.Seek(int64(chunk.Start+chunk.Done), 0)
 
 		_, err = io.Copy(out, io.TeeReader(resp.Body, chunk))
 	}
