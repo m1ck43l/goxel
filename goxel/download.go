@@ -28,7 +28,7 @@ type teeReader struct {
 
 func (t *teeReader) Read(p []byte) (n int, err error) {
 	n, err = t.r.Read(p)
-	if n > 0 && t.d.Chunk.Total < t.d.Chunk.Done{
+	if n > 0 && t.d.Chunk.Total > t.d.Chunk.Done {
 		if n, err := t.w.Write(p[:n]); err != nil {
 			return n, err
 		}
