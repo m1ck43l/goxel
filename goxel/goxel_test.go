@@ -96,6 +96,7 @@ func TestRunOneFile(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:						 256,
 	}
 	goxel.Run()
 
@@ -119,6 +120,7 @@ func TestRunMultipleFiles(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:						 256,
 	}
 	goxel.Run()
 
@@ -144,6 +146,7 @@ func TestSingleConnection(t *testing.T) {
 		MaxConnectionsPerFile: 1,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:						 256,
 	}
 	goxel.Run()
 
@@ -169,6 +172,7 @@ func TestOverwrite(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   true,
 		Quiet:                 true,
+		BufferSize:						 256,
 	}
 	goxel.Run()
 
@@ -189,6 +193,7 @@ func TestOverwrite(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   true,
 		Quiet:                 true,
+		BufferSize:						 256,
 	}
 	goxel.Run()
 
@@ -213,6 +218,7 @@ func TestNoRange(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:						 256,
 	}
 	goxel.Run()
 

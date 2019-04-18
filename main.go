@@ -38,6 +38,7 @@ func main() {
 	overwriteOutputFile := flag.Bool("overwrite", false, "Overwrite existing file(s)")
 	quiet := flag.Bool("quiet", false, "No stdout output")
 	proxy := flag.String("proxy", "", "Proxy string: (http|https|socks5)://0.0.0.0:0000")
+	bufferSize := flag.Int("buffer-size", 256, "Buffer size in KB")
 
 	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable")
 	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable")
@@ -79,6 +80,7 @@ func main() {
 		Proxy:                 *proxy,
 		AlldebridLogin:        *alldebridLogin,
 		AlldebridPassword:     *alldebridPassword,
+		BufferSize:            *bufferSize,
 	}
 	goxel.Run()
 }

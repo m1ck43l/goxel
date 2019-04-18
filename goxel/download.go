@@ -16,10 +16,30 @@ type download struct {
 	Offset               uint64
 }
 
+func TeeReader(d *download, r io.Reader, w io.Writer) io.Reader {
+	return &teeReader{d, r, w}
+}
+
+type teeReader struct {
+	d *download
+	r io.Reader
+	w io.Writer
+}
+
+func (t *teeReader) Read(p []byte) (n int, err error) {
+	n, err = t.r.Read(p)
+	if n > 0 && t.d.Chunk.Total < t.d.Chunk.Done{
+		if n, err := t.w.Write(p[:n]); err != nil {
+			return n, err
+		}
+	}
+	return
+}
+
 // DownloadWorker is the worker functions that processes the download of one Chunk.
 // It takes a WaitGroup to ensure all workers have finished before exiting the program.
 // It also takes a Channel of Chunks to receive the chunks to download.
-func DownloadWorker(wg *sync.WaitGroup, chunks chan download) {
+func DownloadWorker(wg *sync.WaitGroup, chunks chan download, bs int) {
 	defer wg.Done()
 
 	client, err := NewClient()
@@ -67,6 +87,18 @@ func DownloadWorker(wg *sync.WaitGroup, chunks chan download) {
 
 		out.Seek(int64(chunk.Start+chunk.Done), 0)
 
-		_, err = io.Copy(out, io.TeeReader(resp.Body, chunk))
+		var src io.Reader
+		src = TeeReader(&download, resp.Body, chunk)
+
+		size := bs * 1024
+		if l, ok := src.(*io.LimitedReader); ok && int64(size) > l.N {
+			if l.N < 1 {
+				size = 1
+			} else {
+				size = int(l.N)
+			}
+		}
+		buf := make([]byte, size)
+		_, err = io.CopyBuffer(out, src, buf)
 	}
 }
