@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"log"
 	"math"
 	"net/http"
@@ -104,30 +103,6 @@ func (f *File) finish() {
 		return
 	}
 	f.Finished = true
-
-	fin, err := os.Open(f.OutputWork)
-	if err != nil {
-		fmt.Printf("[ERROR] Error finalizing download: %v\n", err.Error())
-		return
-	}
-	defer fin.Close()
-
-	fout, err := os.Create(f.Output)
-	if err != nil {
-		fmt.Printf("[ERROR] Error finalizing download: %v\n", err.Error())
-		return
-	}
-	defer fout.Close()
-
-	_, err = fin.Seek(int64(f.Offset), io.SeekStart)
-	if err != nil {
-		fmt.Printf("[ERROR] Error finalizing download: %v\n", err.Error())
-	}
-
-	_, err = io.Copy(fout, fin)
-	if err != nil {
-		fmt.Printf("[ERROR] Error finalizing download: %v\n", err.Error())
-	}
 
 	_ = os.Remove(f.OutputWork)
 }
@@ -317,7 +292,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 		chunks <- download{
 			Chunk:      &f.Chunks[i],
 			InputURL:   f.URL,
-			OutputPath: f.OutputWork,
+			OutputPath: f.Output,
 			Offset:     f.Offset,
 		}
 	}
