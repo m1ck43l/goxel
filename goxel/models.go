@@ -56,7 +56,10 @@ func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
 
 	idx := -1
 	for {
-		if _, err := os.Stat(f.Output); !os.IsNotExist(err) {
+		_, err := os.Stat(f.Output)
+		_, errw := os.Stat(f.Output + "." + workExtension)
+
+		if !os.IsNotExist(err) && os.IsNotExist(errw) {
 			if idx == -1 && OverwriteOutputFile {
 				break
 			} else {
