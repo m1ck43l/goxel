@@ -26,7 +26,6 @@ func TestResume(t *testing.T) {
 				Done:    0,
 				Total:   100,
 				Initial: 0,
-				Index:   0,
 			},
 			{
 				Start:   100,
@@ -34,7 +33,6 @@ func TestResume(t *testing.T) {
 				Done:    0,
 				Total:   100,
 				Initial: 0,
-				Index:   1,
 			},
 			{
 				Start:   200,
@@ -42,7 +40,6 @@ func TestResume(t *testing.T) {
 				Done:    0,
 				Total:   100,
 				Initial: 0,
-				Index:   2,
 			},
 		},
 	}
@@ -55,12 +52,12 @@ func TestResume(t *testing.T) {
 	fileR.ResumeChunks()
 
 	sort.SliceStable(fileR.Chunks, func(i, j int) bool {
-		return fileR.Chunks[i].Index < fileR.Chunks[j].Index
+		return fileR.Chunks[i].Start < fileR.Chunks[j].Start
 	})
 
 	for i, c1 := range file.Chunks {
 		c2 := fileR.Chunks[i]
-		if c1.Start != c2.Start || c1.Index != c2.Index || c1.End != c2.End {
+		if c1.Start != c2.Start || c1.End != c2.End {
 			t.Error("Chunks don't match!")
 		}
 	}

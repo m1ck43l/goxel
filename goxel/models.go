@@ -21,7 +21,7 @@ const (
 
 // Chunk stores a part of a file being downloaded
 type Chunk struct {
-	Start, End, Done, Total, Initial, Index uint64
+	Start, End, Done, Total, Initial, Worker uint64
 }
 
 func (c *Chunk) Write(b []byte) (int, error) {
@@ -36,7 +36,7 @@ type File struct {
 	Chunks                  []Chunk
 	Finished, Valid         bool
 	Error                   string
-	Offset                  uint64
+	Size                    uint64
 }
 
 func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
@@ -56,7 +56,10 @@ func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
 
 	idx := -1
 	for {
-		if _, err := os.Stat(f.Output); !os.IsNotExist(err) {
+		_, err := os.Stat(f.Output)
+		_, errw := os.Stat(f.Output + "." + workExtension)
+
+		if !os.IsNotExist(err) && os.IsNotExist(errw) {
 			if idx == -1 && OverwriteOutputFile {
 				break
 			} else {
@@ -77,7 +80,6 @@ func (f *File) writeMetadata() {
 	}
 
 	f.Valid = true
-	f.Offset = 8 + uint64(len(f.Chunks))*uint64(unsafe.Sizeof(Chunk{}))
 
 	file, err := os.OpenFile(f.OutputWork, os.O_CREATE|os.O_WRONLY, 0644)
 	defer file.Close()
@@ -188,18 +190,18 @@ func (f *File) ResumeChunks() bool {
 		}
 
 		sort.SliceStable(initial, func(i, j int) bool {
-			return initial[i].Index < initial[j].Index
+			return initial[i].Start < initial[j].Start
 		})
 
 		f.Chunks = make([]Chunk, len(initial), len(initial))
 		for i := 0; i < len(initial); i++ {
 			f.Chunks[i] = Chunk{
-				Start:   initial[i].Start,
+				Start:   initial[i].Start + initial[i].Done,
 				End:     initial[i].End,
-				Index:   uint64(i),
-				Done:    initial[i].Done,
-				Total:   initial[i].Total,
-				Initial: initial[i].Done,
+				Worker:  uint64(i),
+				Done:    0,
+				Total:   initial[i].Total - initial[i].Done,
+				Initial: 0,
 			}
 		}
 
@@ -253,6 +255,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 		return
 	}
 	contentLength, _ := strconv.ParseUint(rawContentLength[0], 10, 64)
+	f.Size = contentLength
 
 	if resume := f.ResumeChunks(); !resume {
 		if !acceptRangesOk || len(acceptRanges) == 0 || acceptRanges[0] != "bytes" {
@@ -275,8 +278,8 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 					Start: uint64(i) * chunkSize,
 					End: uint64(math.Min(float64(uint64(i+1)*chunkSize-1),
 						float64(contentLength))),
-					Index: uint64(i),
-					Done:  0,
+					Worker: uint64(i),
+					Done:   0,
 				}
 				f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start
 
@@ -293,7 +296,6 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 			Chunk:      &f.Chunks[i],
 			InputURL:   f.URL,
 			OutputPath: f.Output,
-			Offset:     f.Offset,
 		}
 	}
 }
