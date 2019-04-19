@@ -3,6 +3,7 @@ package goxel
 import (
 	"crypto/tls"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"sync"
@@ -42,6 +43,8 @@ func (g *GoXel) Run() {
 	if len(urls) == 0 {
 		return
 	}
+
+	g.MaxConnections = int(math.Min(float64(g.MaxConnections), float64(g.MaxConnectionsPerFile*len(urls))))
 
 	urlPreprocessors := []URLPreprocessor{&StandardURLPreprocessor{}}
 	if g.AlldebridLogin != "" && g.AlldebridPassword != "" || os.Getenv("GOXEL_ALLDEBRID_USERNAME") != "" && os.Getenv("GOXEL_ALLDEBRID_PASSWD") != "" {
