@@ -196,12 +196,12 @@ func (f *File) ResumeChunks() bool {
 		f.Chunks = make([]Chunk, len(initial), len(initial))
 		for i := 0; i < len(initial); i++ {
 			f.Chunks[i] = Chunk{
-				Start:   initial[i].Start,
+				Start:   initial[i].Start + initial[i].Done,
 				End:     initial[i].End,
 				Worker:  uint64(i),
-				Done:    initial[i].Done,
-				Total:   initial[i].Total,
-				Initial: initial[i].Done,
+				Done:    0,
+				Total:   initial[i].Total - initial[i].Done,
+				Initial: 0,
 			}
 		}
 
