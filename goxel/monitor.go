@@ -16,8 +16,28 @@ type monitor struct {
 	Value    uint64
 }
 
+// QuietMonitoring only ensures the Files are synced every Xs
+func QuietMonitoring(files []*File, done chan bool) {
+	for {
+		select {
+		default:
+			for _, f := range files {
+				if !f.Valid {
+					continue
+				}
+
+				f.UpdateStatus()
+			}
+			time.Sleep(100 * time.Millisecond)
+
+		case <-done:
+			return
+		}
+	}
+}
+
 // Monitoring monitors the current downloads and display the speed and progress for each files
-func Monitoring(files []*File, done chan bool, quiet bool) {
+func Monitoring(files []*File, done chan bool) {
 	monitors := make([]monitor, monitorCount, monitorCount)
 
 	var count, pDone, gDone uint64
@@ -81,13 +101,11 @@ func Monitoring(files []*File, done chan bool, quiet bool) {
 			pDone = gDone
 			lastStart = time.Now()
 
-			if !quiet {
-				for _, s := range output {
-					if s == "" {
-						fmt.Printf("%v", strings.Repeat(" ", int(getWidth())))
-					} else {
-						fmt.Print(s + "\n")
-					}
+			for _, s := range output {
+				if s == "" {
+					fmt.Printf("%v", strings.Repeat(" ", int(getWidth())))
+				} else {
+					fmt.Print(s + "\n")
 				}
 			}
 

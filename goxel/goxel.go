@@ -87,7 +87,12 @@ func (g *GoXel) Run() {
 		wg.Add(1)
 		go DownloadWorker(i, &wg, chunks, g.BufferSize)
 	}
-	go Monitoring(results, done, g.Quiet)
+
+	if g.Quiet {
+		go QuietMonitoring(results, done)
+	} else {
+		go Monitoring(results, done)
+	}
 
 	wgP.Wait()
 	close(chunks)
