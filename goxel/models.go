@@ -21,7 +21,7 @@ const (
 
 // Chunk stores a part of a file being downloaded
 type Chunk struct {
-	Start, End, Done, Total, Initial, Index uint64
+	Start, End, Done, Total, Initial, Worker uint64
 }
 
 func (c *Chunk) Write(b []byte) (int, error) {
@@ -198,7 +198,7 @@ func (f *File) ResumeChunks() bool {
 			f.Chunks[i] = Chunk{
 				Start:   initial[i].Start,
 				End:     initial[i].End,
-				Index:   uint64(i),
+				Worker:  uint64(i),
 				Done:    initial[i].Done,
 				Total:   initial[i].Total,
 				Initial: initial[i].Done,
@@ -278,8 +278,8 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 					Start: uint64(i) * chunkSize,
 					End: uint64(math.Min(float64(uint64(i+1)*chunkSize-1),
 						float64(contentLength))),
-					Index: uint64(i),
-					Done:  0,
+					Worker: uint64(i),
+					Done:   0,
 				}
 				f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start
 

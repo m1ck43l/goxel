@@ -53,6 +53,7 @@ func Monitoring(files []*File, done chan bool, quiet bool) {
 			speed := uint64(float64(curDone) / (float64(curDelay/time.Nanosecond) / 1000000000))
 
 			output = append(output, fmt.Sprintf("Download speed: %8v/s", humanize.Bytes(speed)))
+			output = append(output, fmt.Sprintf("Active connections: %6v", activeConnections.v))
 			output = append(output, "")
 
 			for idx, f := range files {

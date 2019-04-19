@@ -13,6 +13,7 @@ import (
 
 var headers map[string]string
 var proxyURL string
+var activeConnections counter
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 // Credentials can either be passed in command line arguments or using the following environment variables:
@@ -31,6 +32,7 @@ type GoXel struct {
 func (g *GoXel) Run() {
 	headers = g.Headers
 	proxyURL = g.Proxy
+	activeConnections = counter{}
 
 	if g.IgnoreSSLVerification {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}

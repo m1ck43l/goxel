@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -30,6 +31,23 @@ func getWidth() uint {
 		return uint(100)
 	}
 	return uint(ws.Col)
+}
+
+type counter struct {
+	v   int
+	mux sync.Mutex
+}
+
+func (c *counter) inc() {
+	c.mux.Lock()
+	c.v++
+	c.mux.Unlock()
+}
+
+func (c *counter) dec() {
+	c.mux.Lock()
+	c.v--
+	c.mux.Unlock()
 }
 
 // NewClient returns a HTTP client with the requested configuration
