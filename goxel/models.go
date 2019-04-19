@@ -36,7 +36,7 @@ type File struct {
 	Chunks                  []Chunk
 	Finished, Valid         bool
 	Error                   string
-	Offset                  uint64
+	Size                    uint64
 }
 
 func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
@@ -80,7 +80,6 @@ func (f *File) writeMetadata() {
 	}
 
 	f.Valid = true
-	f.Offset = 8 + uint64(len(f.Chunks))*uint64(unsafe.Sizeof(Chunk{}))
 
 	file, err := os.OpenFile(f.OutputWork, os.O_CREATE|os.O_WRONLY, 0644)
 	defer file.Close()
@@ -191,7 +190,7 @@ func (f *File) ResumeChunks() bool {
 		}
 
 		sort.SliceStable(initial, func(i, j int) bool {
-			return initial[i].Index < initial[j].Index
+			return initial[i].Start < initial[j].Start
 		})
 
 		f.Chunks = make([]Chunk, len(initial), len(initial))
@@ -256,6 +255,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 		return
 	}
 	contentLength, _ := strconv.ParseUint(rawContentLength[0], 10, 64)
+	f.Size = contentLength
 
 	if resume := f.ResumeChunks(); !resume {
 		if !acceptRangesOk || len(acceptRanges) == 0 || acceptRanges[0] != "bytes" {
@@ -296,7 +296,6 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 			Chunk:      &f.Chunks[i],
 			InputURL:   f.URL,
 			OutputPath: f.Output,
-			Offset:     f.Offset,
 		}
 	}
 }

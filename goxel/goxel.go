@@ -22,7 +22,7 @@ type GoXel struct {
 	AlldebridLogin, AlldebridPassword                 string
 	IgnoreSSLVerification, OverwriteOutputFile, Quiet bool
 	OutputDirectory, InputFile, Proxy                 string
-	MaxConnections, MaxConnectionsPerFile, BufferSize             int
+	MaxConnections, MaxConnectionsPerFile, BufferSize int
 	Headers                                           map[string]string
 	URLs                                              []string
 }
@@ -80,7 +80,7 @@ func (g *GoXel) Run() {
 	var wg sync.WaitGroup
 	for i := 0; i < g.MaxConnections; i++ {
 		wg.Add(1)
-		go DownloadWorker(&wg, chunks, g.BufferSize)
+		go DownloadWorker(i, &wg, chunks, g.BufferSize)
 	}
 	go Monitoring(results, done, g.Quiet)
 

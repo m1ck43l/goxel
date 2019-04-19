@@ -39,7 +39,7 @@ func (t *teeReader) Read(p []byte) (n int, err error) {
 // DownloadWorker is the worker functions that processes the download of one Chunk.
 // It takes a WaitGroup to ensure all workers have finished before exiting the program.
 // It also takes a Channel of Chunks to receive the chunks to download.
-func DownloadWorker(wg *sync.WaitGroup, chunks chan download, bs int) {
+func DownloadWorker(i int, wg *sync.WaitGroup, chunks chan download, bs int) {
 	defer wg.Done()
 
 	client, err := NewClient()
@@ -54,6 +54,7 @@ func DownloadWorker(wg *sync.WaitGroup, chunks chan download, bs int) {
 		}
 
 		chunk := download.Chunk
+		chunk.Index = uint64(i)
 
 		if chunk.Total <= chunk.Done {
 			continue
