@@ -16,7 +16,7 @@ type download struct {
 	Offset               uint64
 }
 
-func TeeReader(d *download, r io.Reader, w io.Writer) io.Reader {
+func teeReaderFunc(d *download, r io.Reader, w io.Writer) io.Reader {
 	return &teeReader{d, r, w}
 }
 
@@ -89,7 +89,7 @@ func DownloadWorker(i int, wg *sync.WaitGroup, chunks chan download, bs int) {
 		out.Seek(int64(chunk.Start+chunk.Done), 0)
 
 		var src io.Reader
-		src = TeeReader(&download, resp.Body, chunk)
+		src = teeReaderFunc(&download, resp.Body, chunk)
 
 		size := bs * 1024
 		if l, ok := src.(*io.LimitedReader); ok && int64(size) > l.N {
