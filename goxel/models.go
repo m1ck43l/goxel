@@ -11,6 +11,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"unsafe"
 )
@@ -30,13 +31,36 @@ func (c *Chunk) Write(b []byte) (int, error) {
 	return n, nil
 }
 
+// BuildProgress builds the progress display for a specific Chunk
+// "-" means downloaded during this process
+// " " means not yet downloaded
+func (c *Chunk) BuildProgress(buf []string, unit float64) {
+	if c.End <= c.Start {
+		return
+	}
+
+	rng := int(float64(c.End-c.Start)*unit) + 1
+	offset := int(float64(c.Start) * unit)
+
+	for j := 0; j < int(math.Min(float64(c.Done)*unit, float64(rng)-1)); j++ {
+		buf[offset+j] = "-"
+	}
+
+	buf[offset+int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0))] = fmt.Sprintf("%d", c.Worker)
+
+	for j := int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0)) + 1; j < rng; j++ {
+		buf[offset+j] = " "
+	}
+}
+
 // File stores a file to be downloaded
 type File struct {
-	URL, Output, OutputWork string
-	Chunks                  []Chunk
-	Finished, Valid         bool
-	Error                   string
-	Size                    uint64
+	URL, Output, OutputWork      string
+	Chunks                       []Chunk
+	Finished, Valid, Initialized bool
+	Error                        string
+	Size                         uint64
+	Progress                     []string
 }
 
 func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
@@ -72,6 +96,28 @@ func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
 	}
 
 	f.OutputWork = f.Output + "." + workExtension
+}
+
+// BuildProgress builds the progress display for a specific File
+// "-" means downloaded during this process
+// " " means not yet downloaded
+// "+" means already downloaded during a previous process (resumed)
+func (f *File) BuildProgress(unit float64) string {
+	rng := int(float64(f.Size) * unit)
+
+	if !f.Initialized {
+		f.Progress = make([]string, rng, rng)
+		for i := 0; i < rng; i++ {
+			f.Progress[i] = "+"
+		}
+		f.Initialized = true
+	}
+
+	for _, chunk := range f.Chunks {
+		chunk.BuildProgress(f.Progress, unit)
+	}
+
+	return strings.Join(f.Progress, "")
 }
 
 func (f *File) writeMetadata() {
