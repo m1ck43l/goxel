@@ -67,15 +67,15 @@ func (c *counter) dec() {
 func NewClient() (*http.Client, error) {
 	client := &http.Client{}
 
-	if proxyURL != "" {
+	if goxel.Proxy != "" {
 		re := regexp.MustCompile(`^(http|https|socks5)://`)
-		protocol := re.Find([]byte(proxyURL))
+		protocol := re.Find([]byte(goxel.Proxy))
 
 		if protocol != nil {
 			var transport *http.Transport
 
 			if string(protocol) == "http://" || string(protocol) == "https://" {
-				pURL, err := url.Parse(proxyURL)
+				pURL, err := url.Parse(goxel.Proxy)
 				if err != nil {
 					return client, errors.New("Invalid proxy URL")
 				}
@@ -84,7 +84,7 @@ func NewClient() (*http.Client, error) {
 					Proxy: http.ProxyURL(pURL),
 				}
 			} else if string(protocol) == "socks5://" {
-				dialer, err := proxy.SOCKS5("tcp", strings.Replace(proxyURL, "socks5://", "", 1), nil, proxy.Direct)
+				dialer, err := proxy.SOCKS5("tcp", strings.Replace(goxel.Proxy, "socks5://", "", 1), nil, proxy.Direct)
 				if err != nil {
 					return client, errors.New("Invalid proxy URL")
 				}

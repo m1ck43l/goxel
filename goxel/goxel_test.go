@@ -41,6 +41,8 @@ var hashes map[string]string
 var output string
 
 func TestMain(m *testing.M) {
+	goxel = &GoXel{}
+
 	files := map[string]int{
 		"25MB": 25000000,
 		"30MB": 30000000,

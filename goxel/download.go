@@ -13,7 +13,7 @@ import (
 type download struct {
 	Chunk                *Chunk
 	OutputPath, InputURL string
-	Offset               uint64
+	FileID               uint32
 }
 
 func teeReaderFunc(d *download, r io.Reader, w io.Writer) io.Reader {
@@ -36,10 +36,49 @@ func (t *teeReader) Read(p []byte) (n int, err error) {
 	return
 }
 
+// RebalanceChunks ensures new connections have a chunk attributed to help delayed ones
+func RebalanceChunks(h chan header, d chan download, files []*File) {
+	closed := false
+	for {
+		f := <-h
+
+		var file *File
+		for _, fi := range files {
+			if fi.ID == f.FileID {
+				file = fi
+				break
+			}
+		}
+
+		remaining := file.Size
+		var idx int
+		for i, chunk := range file.Chunks {
+			if chunk.Total-chunk.Done > uint64(0.1*float64(file.Size)) && remaining > chunk.Total-chunk.Done {
+				remaining = chunk.Total - chunk.Done
+				idx = i
+			}
+		}
+
+		if remaining != file.Size {
+			chunk := file.splitChunkInPlace(&file.Chunks[idx], f.ChunkID)
+			d <- download{
+				Chunk:      chunk,
+				InputURL:   file.URL,
+				OutputPath: file.Output,
+			}
+		} else {
+			if !closed {
+				close(d)
+				closed = true
+			}
+		}
+	}
+}
+
 // DownloadWorker is the worker functions that processes the download of one Chunk.
 // It takes a WaitGroup to ensure all workers have finished before exiting the program.
 // It also takes a Channel of Chunks to receive the chunks to download.
-func DownloadWorker(i int, wg *sync.WaitGroup, chunks chan download, bs int) {
+func DownloadWorker(i int, wg *sync.WaitGroup, chunks chan download, bs int, finished chan header) {
 	defer wg.Done()
 
 	client, err := NewClient()
@@ -54,6 +93,13 @@ func DownloadWorker(i int, wg *sync.WaitGroup, chunks chan download, bs int) {
 		}
 
 		handleChunkDownload(&download, i, client, bs)
+
+		if len(chunks) == 0 {
+			finished <- header{
+				FileID:  download.FileID,
+				ChunkID: download.Chunk.ID,
+			}
+		}
 	}
 }
 
@@ -62,7 +108,7 @@ func handleChunkDownload(download *download, i int, client *http.Client, bs int)
 	defer activeConnections.dec()
 
 	chunk := download.Chunk
-	chunk.Worker = uint64(i)
+	chunk.Worker = uint32(i)
 
 	if chunk.Total <= chunk.Done {
 		return
@@ -71,7 +117,7 @@ func handleChunkDownload(download *download, i int, client *http.Client, bs int)
 	req, err := http.NewRequest("GET", download.InputURL, nil)
 	req.Header.Set("Range", "bytes="+strconv.FormatUint(chunk.Start+chunk.Done, 10)+"-"+strconv.FormatUint(chunk.End, 10))
 
-	for name, value := range headers {
+	for name, value := range goxel.Headers {
 		req.Header.Set(name, value)
 	}
 

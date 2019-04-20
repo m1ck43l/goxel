@@ -12,9 +12,8 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-var headers map[string]string
-var proxyURL string
 var activeConnections counter
+var goxel *GoXel
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 // Credentials can either be passed in command line arguments or using the following environment variables:
@@ -31,8 +30,7 @@ type GoXel struct {
 
 // Run starts the downloading process
 func (g *GoXel) Run() {
-	headers = g.Headers
-	proxyURL = g.Proxy
+	goxel = g
 	activeConnections = counter{}
 
 	if g.IgnoreSSLVerification {
@@ -68,9 +66,10 @@ func (g *GoXel) Run() {
 	done := make(chan bool)
 
 	var wgP sync.WaitGroup
-	for _, url := range urls {
+	for i, url := range urls {
 		file := File{
 			URL: url,
+			ID:  uint32(i),
 		}
 
 		file.setOutput(g.OutputDirectory, g.OverwriteOutputFile)
@@ -81,11 +80,14 @@ func (g *GoXel) Run() {
 		results = append(results, &file)
 	}
 
+	finished := make(chan header)
+	go RebalanceChunks(finished, chunks, results)
+
 	start := time.Now()
 	var wg sync.WaitGroup
 	for i := 0; i < g.MaxConnections; i++ {
 		wg.Add(1)
-		go DownloadWorker(i, &wg, chunks, g.BufferSize)
+		go DownloadWorker(i, &wg, chunks, g.BufferSize, finished)
 	}
 
 	if g.Quiet {
@@ -95,8 +97,6 @@ func (g *GoXel) Run() {
 	}
 
 	wgP.Wait()
-	close(chunks)
-
 	wg.Wait()
 
 	time.Sleep(1 * time.Second)
@@ -106,7 +106,7 @@ func (g *GoXel) Run() {
 	for _, f := range results {
 		f.finish()
 		for i := 0; i < len(f.Chunks); i++ {
-			totalBytes += f.Chunks[i].Total - f.Chunks[i].Initial
+			totalBytes += f.Chunks[i].Total
 		}
 	}
 

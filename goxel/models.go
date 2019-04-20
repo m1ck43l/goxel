@@ -22,7 +22,8 @@ const (
 
 // Chunk stores a part of a file being downloaded
 type Chunk struct {
-	Start, End, Done, Total, Initial, Worker uint64
+	ID, Worker              uint32
+	Start, End, Done, Total uint64
 }
 
 func (c *Chunk) Write(b []byte) (int, error) {
@@ -62,6 +63,11 @@ type File struct {
 	Size                         uint64
 	Progress                     []string
 	Mux                          sync.Mutex
+	ID                           uint32
+}
+
+type header struct {
+	FileID, ChunkID uint32
 }
 
 func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
@@ -156,6 +162,35 @@ func (f *File) finish() {
 	_ = os.Remove(f.OutputWork)
 }
 
+func (f *File) splitChunkInPlace(baseChunk *Chunk, id uint32) *Chunk {
+	f.Mux.Lock()
+	defer f.Mux.Unlock()
+
+	remainingPerChunk := (baseChunk.End - baseChunk.Start - baseChunk.Done) / 2
+
+	for i, chunk := range f.Chunks {
+		if chunk.ID != uint32(id) {
+			continue
+		}
+
+		chunk2 := Chunk{
+			Start:  baseChunk.End - remainingPerChunk + 1,
+			End:    baseChunk.End,
+			Worker: 0,
+			Done:   0,
+			Total:  remainingPerChunk - 1,
+			ID:     chunk.ID,
+		}
+		f.Chunks[i] = chunk2
+
+		baseChunk.End -= remainingPerChunk
+		baseChunk.Total = baseChunk.End - baseChunk.Start
+
+		return &f.Chunks[i]
+	}
+	return nil
+}
+
 func (f *File) splitChunk(baseChunk *Chunk) Chunk {
 	f.Mux.Lock()
 	defer f.Mux.Unlock()
@@ -163,12 +198,11 @@ func (f *File) splitChunk(baseChunk *Chunk) Chunk {
 	remainingPerChunk := (baseChunk.End - baseChunk.Start - baseChunk.Done) / 2
 
 	chunk2 := Chunk{
-		Start:   baseChunk.End - remainingPerChunk + 1,
-		End:     baseChunk.End,
-		Worker:  0,
-		Done:    0,
-		Total:   remainingPerChunk - 1,
-		Initial: 0,
+		Start:  baseChunk.End - remainingPerChunk + 1,
+		End:    baseChunk.End,
+		Worker: 0,
+		Done:   0,
+		Total:  remainingPerChunk - 1,
 	}
 
 	baseChunk.End -= remainingPerChunk
@@ -189,7 +223,7 @@ func (f *File) UpdateStatus() (float64, uint64, uint64, uint64) {
 		remaining += v.End - v.Start - v.Done
 		total += v.Total
 
-		if v.Done < v.Total && v.Done > v.Initial {
+		if v.Done < v.Total && v.Done > 0 {
 			conn++
 		}
 	}
@@ -225,7 +259,6 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 			rbytes := make([]byte, 8)
 			_, err := file.Read(rbytes)
 			if err != nil {
-				log.Printf(err.Error())
 				return false
 			}
 
@@ -233,7 +266,6 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 			buf := bytes.NewBuffer(rbytes)
 			err = binary.Read(buf, binary.BigEndian, &initialSize)
 			if err != nil {
-				log.Printf(err.Error())
 				return false
 			}
 
@@ -242,7 +274,6 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 				rbytes = make([]byte, unsafe.Sizeof(Chunk{}))
 				_, err := file.Read(rbytes)
 				if err != nil {
-					log.Printf(err.Error())
 					return false
 				}
 
@@ -250,7 +281,6 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 				buf := bytes.NewBuffer(rbytes)
 				err = binary.Read(buf, binary.BigEndian, &initial[i])
 				if err != nil {
-					log.Printf(err.Error())
 					return false
 				}
 			}
@@ -266,12 +296,11 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 		f.Chunks = make([]Chunk, len(initial), len(initial))
 		for i := 0; i < len(initial); i++ {
 			f.Chunks[i] = Chunk{
-				Start:   initial[i].Start + initial[i].Done,
-				End:     initial[i].End,
-				Worker:  uint64(i),
-				Done:    0,
-				Total:   initial[i].Total - initial[i].Done,
-				Initial: 0,
+				Start:  initial[i].Start + initial[i].Done,
+				End:    initial[i].End,
+				Worker: uint32(i),
+				Done:   0,
+				Total:  initial[i].Total - initial[i].Done,
 			}
 		}
 
@@ -319,7 +348,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 		return
 	}
 
-	for name, value := range headers {
+	for name, value := range goxel.Headers {
 		req.Header.Set(name, value)
 	}
 
@@ -366,7 +395,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 					Start: uint64(i) * chunkSize,
 					End: uint64(math.Min(float64(uint64(i+1)*chunkSize-1),
 						float64(contentLength))),
-					Worker: uint64(i),
+					Worker: uint32(i),
 					Done:   0,
 				}
 				f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start
@@ -380,6 +409,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 	f.writeMetadata()
 
 	for i := 0; i < len(f.Chunks); i++ {
+		f.Chunks[i].ID = uint32(i)
 		chunks <- download{
 			Chunk:      &f.Chunks[i],
 			InputURL:   f.URL,
