@@ -2,6 +2,7 @@ package goxel
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -31,6 +32,17 @@ func getWidth() uint {
 		return uint(100)
 	}
 	return uint(ws.Col)
+}
+
+func fmtDuration(d uint64) string {
+	h := d / 3600
+	m := (d - h*3600) / 60
+	s := d - m*60 - h*3600
+
+	if h > 99 {
+		return fmt.Sprintf(" > 99 h ")
+	}
+	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
 
 type counter struct {

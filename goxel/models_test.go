@@ -49,7 +49,7 @@ func TestResume(t *testing.T) {
 		Output:     path.Join(dir, "work.mp4"),
 		OutputWork: path.Join(dir, "work.mp4."+workExtension),
 	}
-	fileR.ResumeChunks()
+	fileR.ResumeChunks(3)
 
 	sort.SliceStable(fileR.Chunks, func(i, j int) bool {
 		return fileR.Chunks[i].Start < fileR.Chunks[j].Start

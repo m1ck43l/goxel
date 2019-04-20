@@ -61,6 +61,7 @@ type File struct {
 	Error                        string
 	Size                         uint64
 	Progress                     []string
+	Mux                          sync.Mutex
 }
 
 func (f *File) setOutput(directory string, OverwriteOutputFile bool) {
@@ -155,15 +156,37 @@ func (f *File) finish() {
 	_ = os.Remove(f.OutputWork)
 }
 
+func (f *File) splitChunk(baseChunk *Chunk) Chunk {
+	f.Mux.Lock()
+	defer f.Mux.Unlock()
+
+	remainingPerChunk := (baseChunk.End - baseChunk.Start - baseChunk.Done) / 2
+
+	chunk2 := Chunk{
+		Start:   baseChunk.End - remainingPerChunk + 1,
+		End:     baseChunk.End,
+		Worker:  0,
+		Done:    0,
+		Total:   remainingPerChunk - 1,
+		Initial: 0,
+	}
+
+	baseChunk.End -= remainingPerChunk
+	baseChunk.Total = baseChunk.End - baseChunk.Start
+
+	return chunk2
+}
+
 // UpdateStatus returns the current status of the download
 // The first returned value is the progress percentage
 // The second returned value is the number of active connections for this file
 // The third returned value is the number of bytes downloaded
-func (f *File) UpdateStatus() (float64, uint64, uint64) {
-	var done, total, conn uint64
+// The last returned value is the number of bytes downloaded during this session
+func (f *File) UpdateStatus() (float64, uint64, uint64, uint64) {
+	var remaining, total, conn uint64
 	for i := 0; i < len(f.Chunks); i++ {
 		v := f.Chunks[i]
-		done += v.Done
+		remaining += v.End - v.Start - v.Done
 		total += v.Total
 
 		if v.Done < v.Total && v.Done > v.Initial {
@@ -171,8 +194,9 @@ func (f *File) UpdateStatus() (float64, uint64, uint64) {
 		}
 	}
 
+	done := f.Size - remaining
 	if !f.Finished {
-		if done >= total && done > 0 {
+		if done >= f.Size && done > 0 {
 			f.finish()
 		}
 
@@ -182,15 +206,15 @@ func (f *File) UpdateStatus() (float64, uint64, uint64) {
 	}
 
 	var ratio float64
-	if total > 0 {
-		ratio = float64(done) / float64(total) * 100
+	if f.Size > 0 {
+		ratio = float64(done) / float64(f.Size) * 100
 	}
 
-	return ratio, conn, done
+	return ratio, conn, done, total - remaining
 }
 
 // ResumeChunks tries to resume the current download by checking if the file exists and is valid
-func (f *File) ResumeChunks() bool {
+func (f *File) ResumeChunks(maxConnPerFile int) bool {
 	if _, err := os.Stat(f.OutputWork); !os.IsNotExist(err) {
 		var initial []Chunk
 
@@ -251,6 +275,24 @@ func (f *File) ResumeChunks() bool {
 			}
 		}
 
+		// Re-arrange depending on max-conn-file input
+		// Only adding connections is supported
+		if maxConnPerFile > len(f.Chunks) {
+			sort.SliceStable(f.Chunks, func(i, j int) bool {
+				return f.Chunks[i].Total > f.Chunks[j].Total
+			})
+
+			for diff := maxConnPerFile - len(f.Chunks); diff > 0; diff-- {
+				e2 := f.splitChunk(&f.Chunks[0])
+
+				f.Chunks = append(f.Chunks, e2)
+
+				sort.SliceStable(f.Chunks, func(i, j int) bool {
+					return f.Chunks[i].Total > f.Chunks[j].Total
+				})
+			}
+		}
+
 		return true
 	}
 
@@ -303,7 +345,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 	contentLength, _ := strconv.ParseUint(rawContentLength[0], 10, 64)
 	f.Size = contentLength
 
-	if resume := f.ResumeChunks(); !resume {
+	if resume := f.ResumeChunks(nbrPerFile); !resume {
 		if !acceptRangesOk || len(acceptRanges) == 0 || acceptRanges[0] != "bytes" {
 			f.Chunks = make([]Chunk, 1, 1)
 
