@@ -216,7 +216,7 @@ func (f *File) splitChunk(baseChunk *Chunk) Chunk {
 // The second returned value is the number of active connections for this file
 // The third returned value is the number of bytes downloaded
 // The last returned value is the number of bytes downloaded during this session
-func (f *File) UpdateStatus() (float64, uint64, uint64, uint64) {
+func (f *File) UpdateStatus(commit bool) (float64, uint64, uint64, uint64) {
 	var remaining, total, conn uint64
 	for i := 0; i < len(f.Chunks); i++ {
 		v := f.Chunks[i]
@@ -234,7 +234,7 @@ func (f *File) UpdateStatus() (float64, uint64, uint64, uint64) {
 			f.finish()
 		}
 
-		if done > 0 && f.OutputWork != "" {
+		if done > 0 && f.OutputWork != "" && commit {
 			f.writeMetadata()
 		}
 	}

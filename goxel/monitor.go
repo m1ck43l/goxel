@@ -18,6 +18,7 @@ type monitor struct {
 
 // QuietMonitoring only ensures the Files are synced every Xs
 func QuietMonitoring(files []*File, done chan bool) {
+	count := 0
 	for {
 		select {
 		default:
@@ -26,8 +27,9 @@ func QuietMonitoring(files []*File, done chan bool) {
 					continue
 				}
 
-				f.UpdateStatus()
+				f.UpdateStatus(count%10 == 0)
 			}
+			count++
 			time.Sleep(100 * time.Millisecond)
 
 		case <-done:
@@ -85,7 +87,7 @@ func Monitoring(files []*File, done chan bool) {
 					continue
 				}
 
-				ratio, conn, done, sdone := f.UpdateStatus()
+				ratio, conn, done, sdone := f.UpdateStatus(count%10 == 0)
 
 				left := fmt.Sprintf("[%3d] - [%6.2f%%] [", idx, ratio)
 
