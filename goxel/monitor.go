@@ -50,9 +50,13 @@ func Monitoring(files []*File, done chan bool) {
 		default:
 			gDone = 0
 
-			move := math.Max(float64(len(output)-1), 0)
-			output = make([]string, 0)
-			output = append(output, fmt.Sprintf(strings.Repeat("\033[F", int(move)))+"\r")
+			if goxel.Scroll {
+				output = make([]string, 0)
+			} else {
+				move := math.Max(float64(len(output)-1), 0)
+				output = make([]string, 0)
+				output = append(output, fmt.Sprintf(strings.Repeat("\033[F", int(move)))+"\r")
+			}
 
 			for idx, f := range files {
 				if f.Error == "" {

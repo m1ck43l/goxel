@@ -51,6 +51,8 @@ goxel [options] [url1] [url2] [url...]
         Proxy string: (http|https|socks5)://0.0.0.0:0000
   -quiet
         No stdout output
+  -scroll
+        Scroll output instead of in place display
   -version
         Version
 

@@ -20,12 +20,12 @@ var goxel *GoXel
 // - GOXEL_ALLDEBRID_USERNAME
 // - GOXEL_ALLDEBRID_PASSWD
 type GoXel struct {
-	AlldebridLogin, AlldebridPassword                 string
-	IgnoreSSLVerification, OverwriteOutputFile, Quiet bool
-	OutputDirectory, InputFile, Proxy                 string
-	MaxConnections, MaxConnectionsPerFile, BufferSize int
-	Headers                                           map[string]string
-	URLs                                              []string
+	AlldebridLogin, AlldebridPassword                         string
+	IgnoreSSLVerification, OverwriteOutputFile, Quiet, Scroll bool
+	OutputDirectory, InputFile, Proxy                         string
+	MaxConnections, MaxConnectionsPerFile, BufferSize         int
+	Headers                                                   map[string]string
+	URLs                                                      []string
 }
 
 // Run starts the downloading process
