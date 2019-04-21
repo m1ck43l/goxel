@@ -17,7 +17,7 @@ Requires Go v1.8+
 ## Build
 
 ```
-$ make
+$ make clean && make deps && make && make test
 ```
 
 Make will create the goxel executable in the bin directory
