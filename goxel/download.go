@@ -38,38 +38,31 @@ func (t *teeReader) Read(p []byte) (n int, err error) {
 
 // RebalanceChunks ensures new connections have a chunk attributed to help delayed ones
 func RebalanceChunks(h chan header, d chan download, files []*File) {
-	closed := false
 	for {
 		f := <-h
 
-		var file *File
 		for _, fi := range files {
 			if fi.ID == f.FileID {
-				file = fi
+				fmt.Printf("FileID -> %d vs %d\n\n\n\n\n\n\n", f.FileID, fi.ID)
+				remaining := fi.Size
+
+				var idx int
+				for i, chunk := range fi.Chunks {
+					if chunk.Total-chunk.Done > uint64(0.1*float64(fi.Size)) && remaining > chunk.Total-chunk.Done {
+						remaining = chunk.Total - chunk.Done
+						idx = i
+					}
+				}
+
+				if remaining != fi.Size {
+					chunk := fi.splitChunkInPlace(&fi.Chunks[idx], f.ChunkID)
+					d <- download{
+						Chunk:      chunk,
+						InputURL:   fi.URL,
+						OutputPath: fi.Output,
+					}
+				}
 				break
-			}
-		}
-
-		remaining := file.Size
-		var idx int
-		for i, chunk := range file.Chunks {
-			if chunk.Total-chunk.Done > uint64(0.1*float64(file.Size)) && remaining > chunk.Total-chunk.Done {
-				remaining = chunk.Total - chunk.Done
-				idx = i
-			}
-		}
-
-		if remaining != file.Size {
-			chunk := file.splitChunkInPlace(&file.Chunks[idx], f.ChunkID)
-			d <- download{
-				Chunk:      chunk,
-				InputURL:   file.URL,
-				OutputPath: file.Output,
-			}
-		} else {
-			if !closed {
-				close(d)
-				closed = true
 			}
 		}
 	}

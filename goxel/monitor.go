@@ -17,17 +17,26 @@ type monitor struct {
 }
 
 // QuietMonitoring only ensures the Files are synced every Xs
-func QuietMonitoring(files []*File, done chan bool) {
+func QuietMonitoring(files []*File, done chan bool, d chan download) {
 	count := 0
+	closed := false
 	for {
 		select {
 		default:
+			finished := 0
 			for _, f := range files {
 				if !f.Valid {
 					continue
 				}
 
 				f.UpdateStatus(count%10 == 0)
+				if f.Finished {
+					finished++
+				}
+			}
+			if finished == len(files) && !closed {
+				close(d)
+				closed = true
 			}
 			count++
 			time.Sleep(100 * time.Millisecond)
@@ -39,13 +48,14 @@ func QuietMonitoring(files []*File, done chan bool) {
 }
 
 // Monitoring monitors the current downloads and display the speed and progress for each files
-func Monitoring(files []*File, done chan bool) {
+func Monitoring(files []*File, done chan bool, d chan download) {
 	monitors := make([]monitor, monitorCount, monitorCount)
 
 	var count, pDone, gDone uint64
 	var output []string
 
 	lastStart := time.Now()
+	closed := false
 
 	for {
 		select {
@@ -82,12 +92,16 @@ func Monitoring(files []*File, done chan bool) {
 			output = append(output, fmt.Sprintf("Active connections: %6v", activeConnections.v))
 			output = append(output, "")
 
+			finished := 0
 			for idx, f := range files {
 				if !f.Valid {
 					continue
 				}
 
 				ratio, conn, done, sdone := f.UpdateStatus(count%10 == 0)
+				if f.Finished {
+					finished++
+				}
 
 				left := fmt.Sprintf("[%3d] - [%6.2f%%] [", idx, ratio)
 
@@ -102,6 +116,12 @@ func Monitoring(files []*File, done chan bool) {
 
 				gDone += sdone
 			}
+
+			if finished == len(files) && !closed {
+				close(d)
+				closed = true
+			}
+
 			output = append(output, "")
 
 			monitors[count%monitorCount] = monitor{

@@ -414,6 +414,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 			Chunk:      &f.Chunks[i],
 			InputURL:   f.URL,
 			OutputPath: f.Output,
+			FileID:     f.ID,
 		}
 	}
 }

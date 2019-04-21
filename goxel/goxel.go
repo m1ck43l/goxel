@@ -91,9 +91,9 @@ func (g *GoXel) Run() {
 	}
 
 	if g.Quiet {
-		go QuietMonitoring(results, done)
+		go QuietMonitoring(results, done, chunks)
 	} else {
-		go Monitoring(results, done)
+		go Monitoring(results, done, chunks)
 	}
 
 	wgP.Wait()
