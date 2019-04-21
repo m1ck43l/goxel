@@ -10,6 +10,10 @@ import (
 )
 
 func TestResume(t *testing.T) {
+	goxel = &GoXel{
+		Resume: true,
+	}
+
 	dir, err := ioutil.TempDir("", "goxel-test")
 	if err != nil {
 		log.Fatal(err)
@@ -61,6 +65,10 @@ func TestResume(t *testing.T) {
 }
 
 func TestResumeWithUpdateMaxConn(t *testing.T) {
+	goxel = &GoXel{
+		Resume: true,
+	}
+
 	dir, err := ioutil.TempDir("", "goxel-test")
 	if err != nil {
 		log.Fatal(err)
