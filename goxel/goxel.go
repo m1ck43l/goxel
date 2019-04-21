@@ -3,6 +3,7 @@ package goxel
 import (
 	"crypto/tls"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"sync"
@@ -11,26 +12,26 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-var headers map[string]string
-var proxyURL string
+var activeConnections counter
+var goxel *GoXel
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 // Credentials can either be passed in command line arguments or using the following environment variables:
 // - GOXEL_ALLDEBRID_USERNAME
 // - GOXEL_ALLDEBRID_PASSWD
 type GoXel struct {
-	AlldebridLogin, AlldebridPassword                 string
-	IgnoreSSLVerification, OverwriteOutputFile, Quiet bool
-	OutputDirectory, InputFile, Proxy                 string
-	MaxConnections, MaxConnectionsPerFile             int
-	Headers                                           map[string]string
-	URLs                                              []string
+	AlldebridLogin, AlldebridPassword                                 string
+	IgnoreSSLVerification, OverwriteOutputFile, Quiet, Scroll, Resume bool
+	OutputDirectory, InputFile, Proxy                                 string
+	MaxConnections, MaxConnectionsPerFile, BufferSize                 int
+	Headers                                                           map[string]string
+	URLs                                                              []string
 }
 
 // Run starts the downloading process
 func (g *GoXel) Run() {
-	headers = g.Headers
-	proxyURL = g.Proxy
+	goxel = g
+	activeConnections = counter{}
 
 	if g.IgnoreSSLVerification {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -40,6 +41,8 @@ func (g *GoXel) Run() {
 	if len(urls) == 0 {
 		return
 	}
+
+	g.MaxConnections = int(math.Min(float64(g.MaxConnections), float64(g.MaxConnectionsPerFile*len(urls))))
 
 	urlPreprocessors := []URLPreprocessor{&StandardURLPreprocessor{}}
 	if g.AlldebridLogin != "" && g.AlldebridPassword != "" || os.Getenv("GOXEL_ALLDEBRID_USERNAME") != "" && os.Getenv("GOXEL_ALLDEBRID_PASSWD") != "" {
@@ -63,9 +66,10 @@ func (g *GoXel) Run() {
 	done := make(chan bool)
 
 	var wgP sync.WaitGroup
-	for _, url := range urls {
+	for i, url := range urls {
 		file := File{
 			URL: url,
+			ID:  uint32(i),
 		}
 
 		file.setOutput(g.OutputDirectory, g.OverwriteOutputFile)
@@ -76,17 +80,23 @@ func (g *GoXel) Run() {
 		results = append(results, &file)
 	}
 
+	finished := make(chan header)
+	go RebalanceChunks(finished, chunks, results)
+
 	start := time.Now()
 	var wg sync.WaitGroup
 	for i := 0; i < g.MaxConnections; i++ {
 		wg.Add(1)
-		go DownloadWorker(&wg, chunks)
+		go DownloadWorker(i, &wg, chunks, g.BufferSize, finished)
 	}
-	go Monitoring(results, done, g.Quiet)
+
+	if g.Quiet {
+		go QuietMonitoring(results, done, chunks)
+	} else {
+		go Monitoring(results, done, chunks)
+	}
 
 	wgP.Wait()
-	close(chunks)
-
 	wg.Wait()
 
 	time.Sleep(1 * time.Second)
@@ -96,7 +106,7 @@ func (g *GoXel) Run() {
 	for _, f := range results {
 		f.finish()
 		for i := 0; i < len(f.Chunks); i++ {
-			totalBytes += f.Chunks[i].Total - f.Chunks[i].Initial
+			totalBytes += f.Chunks[i].Total
 		}
 	}
 

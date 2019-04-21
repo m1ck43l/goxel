@@ -2,10 +2,12 @@ package goxel
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -32,20 +34,48 @@ func getWidth() uint {
 	return uint(ws.Col)
 }
 
+func fmtDuration(d uint64) string {
+	h := d / 3600
+	m := (d - h*3600) / 60
+	s := d - m*60 - h*3600
+
+	if h > 99 {
+		return fmt.Sprintf(" > 99 h ")
+	}
+	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+}
+
+type counter struct {
+	v   int
+	mux sync.Mutex
+}
+
+func (c *counter) inc() {
+	c.mux.Lock()
+	c.v++
+	c.mux.Unlock()
+}
+
+func (c *counter) dec() {
+	c.mux.Lock()
+	c.v--
+	c.mux.Unlock()
+}
+
 // NewClient returns a HTTP client with the requested configuration
 // It supports HTTP and SOCKS proxies
 func NewClient() (*http.Client, error) {
 	client := &http.Client{}
 
-	if proxyURL != "" {
+	if goxel.Proxy != "" {
 		re := regexp.MustCompile(`^(http|https|socks5)://`)
-		protocol := re.Find([]byte(proxyURL))
+		protocol := re.Find([]byte(goxel.Proxy))
 
 		if protocol != nil {
 			var transport *http.Transport
 
 			if string(protocol) == "http://" || string(protocol) == "https://" {
-				pURL, err := url.Parse(proxyURL)
+				pURL, err := url.Parse(goxel.Proxy)
 				if err != nil {
 					return client, errors.New("Invalid proxy URL")
 				}
@@ -54,7 +84,7 @@ func NewClient() (*http.Client, error) {
 					Proxy: http.ProxyURL(pURL),
 				}
 			} else if string(protocol) == "socks5://" {
-				dialer, err := proxy.SOCKS5("tcp", strings.Replace(proxyURL, "socks5://", "", 1), nil, proxy.Direct)
+				dialer, err := proxy.SOCKS5("tcp", strings.Replace(goxel.Proxy, "socks5://", "", 1), nil, proxy.Direct)
 				if err != nil {
 					return client, errors.New("Invalid proxy URL")
 				}
