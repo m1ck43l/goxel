@@ -1,7 +1,7 @@
 # <img src="https://user-images.githubusercontent.com/918212/56085390-af18c780-5e42-11e9-9ae7-7ba453502ddb.png" width="300">
 
 
-[![GoDoc](https://godoc.org/github.com/m1ck43l/goxel?status.svg)](https://godoc.org/github.com/m1ck43l/goxel) [![Build Status](https://travis-ci.org/m1ck43l/goxel.svg?branch=master)](https://travis-ci.org/m1ck43l/goxel/builds) [![Go Report Card](https://goreportcard.com/badge/github.com/m1ck43l/goxel)](https://goreportcard.com/report/github.com/m1ck43l/goxel) [![Coverage Status](https://coveralls.io/repos/github/m1ck43l/goxel/badge.svg?branch=master&_=2)](https://coveralls.io/github/m1ck43l/goxel?branch=master)
+[![GoDoc](https://godoc.org/github.com/m1ck43l/goxel?status.svg)](https://godoc.org/github.com/m1ck43l/goxel) [![Build Status](https://travis-ci.org/m1ck43l/goxel.svg?branch=master)](https://travis-ci.org/m1ck43l/goxel/builds) [![Go Report Card](https://goreportcard.com/badge/github.com/m1ck43l/goxel)](https://goreportcard.com/report/github.com/m1ck43l/goxel) [![Coverage Status](https://coveralls.io/repos/github/m1ck43l/goxel/badge.svg?branch=master&_=0.11)](https://coveralls.io/github/m1ck43l/goxel?branch=master)
 
 
 *GoXel - download accelerator written in Go*
@@ -27,37 +27,24 @@ Make will create the goxel executable in the bin directory
 
 ```
 $ bin/goxel -h
-goxel [options] [url1] [url2] [url...]
-  -alldebrid-password string
-        Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable
-  -alldebrid-username string
-        Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable
-  -buffer-size int
-        Buffer size in KB (default 256)
-  -file string
-        Links file
-  -header value
-        Extra header(s), key=value
-  -insecure
-        Bypass SSL validation
-  -max-conn int
-        Max number of connections (default 8)
-  -max-conn-file int
-        Max number of connections per file (default 4)
-  -no-resume
-        Don't resume downloads
-  -output string
-        Output directory
-  -overwrite
-        Overwrite existing file(s)
-  -proxy string
-        Proxy string: (http|https|socks5)://0.0.0.0:0000
-  -quiet
-        No stdout output
-  -scroll
-        Scroll output instead of in place display
-  -version
-        Version
+GoXel is a download accelerator written in Go
+Usage: goxel [options] [url1] [url2] [url...]
+      --alldebrid-password string         Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable                                                                                 
+      --alldebrid-username string         Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable                                                                               
+      --buffer-size int                   Buffer size in KB (default 256)
+  -f, --file string                       File containing links to download (1 per line)
+      --header header-name=header-value   Extra header(s) (default [])
+  -h, --help                              This information
+      --insecure                          Bypass SSL validation
+      --max-conn int                      Max number of connections (default 8)
+  -m, --max-conn-file int                 Max number of connections per file (default 4)
+      --no-resume                         Don't resume downloads
+  -o, --output string                     Output directory
+      --overwrite                         Overwrite existing file(s)
+  -p, --proxy string                      Proxy string: (http|https|socks5)://0.0.0.0:0000
+  -q, --quiet                             No stdout output
+  -s, --scroll                            Scroll output instead of in place display
+      --version                           Version
 
 Visit https://github.com/m1ck43l/goxel/issues to report bugs.
 ```

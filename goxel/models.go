@@ -245,7 +245,7 @@ func (f *File) UpdateStatus(commit bool) (float64, uint64, uint64, uint64) {
 
 	var ratio float64
 	if f.Size > 0 {
-		ratio = float64(done) / float64(f.Size) * 100
+		ratio = math.Min(float64(done)/float64(f.Size)*100, 100.0)
 	}
 
 	return ratio, conn, done, total - remaining
