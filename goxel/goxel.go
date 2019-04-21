@@ -19,7 +19,7 @@ var activeConnections counter
 var goxel *GoXel
 
 const (
-	version         = 0.10
+	version         = 0.11
 	usageMsg string = "GoXel is a download accelerator written in Go\nUsage: goxel [options] [url1] [url2] [url...]\n"
 )
 
