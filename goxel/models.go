@@ -393,25 +393,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 				Total: contentLength,
 			}
 		} else {
-			f.Chunks = make([]Chunk, nbrPerFile, nbrPerFile)
-
-			chunkSize := contentLength / uint64(len(f.Chunks))
-			remaining := contentLength - chunkSize*uint64(len(f.Chunks))
-
-			for i := 0; i < len(f.Chunks); i++ {
-				f.Chunks[i] = Chunk{
-					Start: uint64(i) * chunkSize,
-					End: uint64(math.Min(float64(uint64(i+1)*chunkSize-1),
-						float64(contentLength))),
-					Worker: uint32(i),
-					Done:   0,
-				}
-				f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start + 1
-
-				if i == len(f.Chunks)-1 {
-					f.Chunks[i].End += remaining
-				}
-			}
+			buildRootChunks(f, nbrPerFile)
 		}
 	}
 	f.writeMetadata()
@@ -423,6 +405,28 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 			InputURL:   f.URL,
 			OutputPath: f.Output,
 			FileID:     f.ID,
+		}
+	}
+}
+
+func buildRootChunks(f *File, nbrPerFile int) {
+	f.Chunks = make([]Chunk, nbrPerFile, nbrPerFile)
+
+	chunkSize := f.Size / uint64(len(f.Chunks))
+	remaining := f.Size - chunkSize*uint64(len(f.Chunks))
+
+	for i := 0; i < len(f.Chunks); i++ {
+		f.Chunks[i] = Chunk{
+			Start: uint64(i) * chunkSize,
+			End: uint64(math.Min(float64(uint64(i+1)*chunkSize-1),
+				float64(f.Size))),
+			Worker: uint32(i),
+			Done:   0,
+		}
+		f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start + 1
+
+		if i == len(f.Chunks)-1 {
+			f.Chunks[i].End += remaining
 		}
 	}
 }
