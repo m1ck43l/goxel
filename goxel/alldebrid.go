@@ -91,7 +91,7 @@ func (s *AllDebridURLPreprocessor) initialize(url string) {
 	}
 	defer req.Body.Close()
 
-	b, err := ioutil.ReadAll(req.Body)
+	b, _ := ioutil.ReadAll(req.Body)
 
 	var resp LoginResponse
 	err = json.Unmarshal(b, &resp)
@@ -122,7 +122,7 @@ func (s *AllDebridURLPreprocessor) initialize(url string) {
 	}
 	defer req.Body.Close()
 
-	b, err = ioutil.ReadAll(req.Body)
+	b, _ = ioutil.ReadAll(req.Body)
 
 	var respD DomainsResponse
 	err = json.Unmarshal(b, &respD)
@@ -160,7 +160,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 				}
 				defer req.Body.Close()
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, _ := ioutil.ReadAll(req.Body)
 
 				var resp LinkResponse
 				err = json.Unmarshal(b, &resp)

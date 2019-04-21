@@ -91,7 +91,7 @@ func buildChunkDescription(output []string, files []*File, count uint64, speed u
 
 // Monitoring monitors the current downloads and display the speed and progress for each files
 func Monitoring(files []*File, done chan bool, d chan download) {
-	monitors := make([]monitor, monitorCount, monitorCount)
+	monitors := make([]monitor, monitorCount)
 
 	var count, pDone, gDone uint64
 	var output []string

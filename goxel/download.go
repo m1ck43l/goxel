@@ -75,7 +75,7 @@ func DownloadWorker(i int, wg *sync.WaitGroup, chunks chan download, bs int, fin
 
 	client, err := NewClient()
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Println(err.Error())
 	}
 
 	for {
@@ -115,7 +115,7 @@ func handleChunkDownload(download *download, i int, client *http.Client, bs int)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
 		return
 	}
 	defer resp.Body.Close()
@@ -127,15 +127,14 @@ func handleChunkDownload(download *download, i int, client *http.Client, bs int)
 
 	out, err := os.OpenFile(download.OutputPath, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
 		return
 	}
 	defer out.Close()
 
 	out.Seek(int64(chunk.Start+chunk.Done), 0)
 
-	var src io.Reader
-	src = teeReaderFunc(download, resp.Body, chunk)
+	src := teeReaderFunc(download, resp.Body, chunk)
 
 	size := bs * 1024
 	if l, ok := src.(*io.LimitedReader); ok && int64(size) > l.N {
