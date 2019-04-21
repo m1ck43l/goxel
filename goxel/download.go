@@ -43,7 +43,6 @@ func RebalanceChunks(h chan header, d chan download, files []*File) {
 
 		for _, fi := range files {
 			if fi.ID == f.FileID {
-				fmt.Printf("FileID -> %d vs %d\n\n\n\n\n\n\n", f.FileID, fi.ID)
 				remaining := fi.Size
 
 				var idx int
