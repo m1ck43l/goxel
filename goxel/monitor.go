@@ -93,8 +93,9 @@ func buildChunkDescription(output []string, files []*File, count uint64, speed u
 func Monitoring(files []*File, done chan bool, d chan download) {
 	monitors := make([]monitor, monitorCount, monitorCount)
 
-	var count, pDone uint64
+	var count, pDone, gDone uint64
 	var output []string
+	var finished int
 
 	lastStart := time.Now()
 	closed := false
@@ -126,7 +127,7 @@ func Monitoring(files []*File, done chan bool, d chan download) {
 			output = append(output, fmt.Sprintf("Active connections: %6v", activeConnections.v))
 			output = append(output, "")
 
-			output, finished, gDone := buildChunkDescription(output, files, count, speed)
+			output, finished, gDone = buildChunkDescription(output, files, count, speed)
 
 			if finished == len(files) && !closed {
 				close(d)

@@ -6,14 +6,22 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
+
+	flag "github.com/spf13/pflag"
 )
 
 var activeConnections counter
 var goxel *GoXel
+
+const (
+	version         = 0.10
+	usageMsg string = "GoXel is a download accelerator written in Go\nUsage: goxel [options] [url1] [url2] [url...]\n"
+)
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
 // Credentials can either be passed in command line arguments or using the following environment variables:
@@ -28,9 +36,70 @@ type GoXel struct {
 	URLs                                                              []string
 }
 
+// NewGoXel builds a GoXel instance based on the command line arguments
+func NewGoXel() *GoXel {
+	goxel = &GoXel{}
+
+	flag.IntVarP(&goxel.MaxConnectionsPerFile, "max-conn-file", "m", 4, "Max number of connections per file")
+	flag.IntVar(&goxel.MaxConnections, "max-conn", 8, "Max number of connections")
+
+	flag.StringVarP(&goxel.InputFile, "file", "f", "", "File containing links to download (1 per line)")
+	flag.StringVarP(&goxel.OutputDirectory, "output", "o", "", "Output directory")
+
+	flag.BoolVar(&goxel.IgnoreSSLVerification, "insecure", false, "Bypass SSL validation")
+	flag.BoolVar(&goxel.OverwriteOutputFile, "overwrite", false, "Overwrite existing file(s)")
+
+	flag.BoolVarP(&goxel.Quiet, "quiet", "q", false, "No stdout output")
+	flag.StringVarP(&goxel.Proxy, "proxy", "p", "", "Proxy string: (http|https|socks5)://0.0.0.0:0000")
+	flag.IntVar(&goxel.BufferSize, "buffer-size", 256, "Buffer size in KB")
+	flag.BoolVarP(&goxel.Scroll, "scroll", "s", false, "Scroll output instead of in place display")
+
+	noresume := flag.Bool("no-resume", false, "Don't resume downloads")
+
+	flag.StringVar(&goxel.AlldebridLogin, "alldebrid-username", "", "Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable")
+	flag.StringVar(&goxel.AlldebridPassword, "alldebrid-password", "", "Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable")
+
+	versionFlag := flag.Bool("version", false, "Version")
+
+	var h headerFlag
+	flag.Var(&h, "header", "Extra header(s)")
+
+	help := flag.BoolP("help", "h", false, "This information")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, usageMsg)
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nVisit https://github.com/m1ck43l/goxel/issues to report bugs.\n")
+	}
+
+	flag.Parse()
+	goxel.URLs = flag.Args()
+
+	if *help {
+		flag.Usage()
+		os.Exit(0)
+	}
+
+	if *versionFlag {
+		fmt.Printf("GoXel v%.1f\n", version)
+		os.Exit(0)
+	}
+
+	// headers must be transformed to match a map[string]string
+	goxel.Headers = make(map[string]string)
+	for _, header := range h {
+		split := strings.Split(header, "=")
+		goxel.Headers[split[0]] = split[1]
+	}
+
+	// Resume must be inverted
+	goxel.Resume = !*noresume
+
+	return goxel
+}
+
 // Run starts the downloading process
 func (g *GoXel) Run() {
-	goxel = g
 	activeConnections = counter{}
 
 	if g.IgnoreSSLVerification {

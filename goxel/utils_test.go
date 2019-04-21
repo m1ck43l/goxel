@@ -19,6 +19,15 @@ func TestHTTP(t *testing.T) {
 	}
 }
 
+func TestHttpError(t *testing.T) {
+	goxel.Proxy = "http://" + string([]byte{0x7f, 0x7f}) + ":1234"
+	_, err := NewClient()
+
+	if err == nil {
+		t.Error("Error should be thrown")
+	}
+}
+
 func TestHTTPS(t *testing.T) {
 	goxel.Proxy = "https://127.0.0.1:8123"
 	client, err := NewClient()
@@ -30,6 +39,15 @@ func TestHTTPS(t *testing.T) {
 	tr := client.Transport.(*http.Transport)
 	if tr.Proxy == nil {
 		t.Error("Error while creating https proxy, proxy is nil")
+	}
+}
+
+func TestHttpsError(t *testing.T) {
+	goxel.Proxy = "https://" + string([]byte{0x7f, 0x7f}) + ":1234"
+	_, err := NewClient()
+
+	if err == nil {
+		t.Error("Error should be thrown")
 	}
 }
 

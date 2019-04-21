@@ -45,6 +45,24 @@ func fmtDuration(d uint64) string {
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
 
+// headerFlag is used to parse headers on the CLI
+// It allows multiple elements to be passed
+type headerFlag []string
+
+func (h *headerFlag) String() string {
+	return fmt.Sprintf("%v", *h)
+}
+
+func (h *headerFlag) Set(value string) error {
+	*h = append(*h, value)
+	return nil
+}
+
+func (h *headerFlag) Type() string {
+	return "header-name=header-value"
+}
+
+// counter allows for an atomic counter
 type counter struct {
 	v   int
 	mux sync.Mutex
@@ -84,10 +102,7 @@ func NewClient() (*http.Client, error) {
 					Proxy: http.ProxyURL(pURL),
 				}
 			} else if string(protocol) == "socks5://" {
-				dialer, err := proxy.SOCKS5("tcp", strings.Replace(goxel.Proxy, "socks5://", "", 1), nil, proxy.Direct)
-				if err != nil {
-					return client, errors.New("Invalid proxy URL")
-				}
+				dialer, _ := proxy.SOCKS5("tcp", strings.Replace(goxel.Proxy, "socks5://", "", 1), nil, proxy.Direct)
 				transport = &http.Transport{
 					Dial: dialer.Dial,
 				}

@@ -87,8 +87,16 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestEmptyRun(t *testing.T) {
+	goxel := NewGoXel()
+
+	if len(goxel.URLs) != 0 {
+		t.Error("URLs should be empty")
+	}
+}
+
 func TestRunOneFile(t *testing.T) {
-	goxel := GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
 		Headers:               map[string]string{},
 		IgnoreSSLVerification: false,
@@ -112,7 +120,7 @@ func TestRunOneFile(t *testing.T) {
 }
 
 func TestRunOneFileWithOutput(t *testing.T) {
-	goxel := GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
 		Headers:               map[string]string{},
 		IgnoreSSLVerification: false,
@@ -136,7 +144,7 @@ func TestRunOneFileWithOutput(t *testing.T) {
 }
 
 func TestRunMultipleFiles(t *testing.T) {
-	goxel := GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB", "http://" + host + ":" + port + "/30MB", "http://" + host + ":" + port + "/50MB"},
 		Headers:               map[string]string{},
 		IgnoreSSLVerification: false,
@@ -162,7 +170,7 @@ func TestRunMultipleFiles(t *testing.T) {
 }
 
 func TestSingleConnection(t *testing.T) {
-	goxel := GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB", "http://" + host + ":" + port + "/30MB"},
 		Headers:               map[string]string{},
 		IgnoreSSLVerification: false,
@@ -188,7 +196,7 @@ func TestSingleConnection(t *testing.T) {
 }
 
 func TestOverwrite(t *testing.T) {
-	goxel := GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
 		Headers:               map[string]string{},
 		IgnoreSSLVerification: false,
@@ -209,7 +217,7 @@ func TestOverwrite(t *testing.T) {
 		t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
 	}
 
-	goxel = GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
 		Headers:               map[string]string{},
 		IgnoreSSLVerification: false,
@@ -234,7 +242,7 @@ func TestOverwrite(t *testing.T) {
 }
 
 func TestNoRange(t *testing.T) {
-	goxel := GoXel{
+	goxel = &GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/img"},
 		Headers:               map[string]string{"User-Agent": "GoXel"},
 		IgnoreSSLVerification: false,
