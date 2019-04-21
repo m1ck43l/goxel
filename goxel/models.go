@@ -178,7 +178,7 @@ func (f *File) splitChunkInPlace(baseChunk *Chunk, id uint32) *Chunk {
 			End:    baseChunk.End,
 			Worker: 0,
 			Done:   0,
-			Total:  remainingPerChunk - 1,
+			Total:  remainingPerChunk,
 			ID:     chunk.ID,
 		}
 		f.Chunks[i] = chunk2
@@ -202,11 +202,11 @@ func (f *File) splitChunk(baseChunk *Chunk) Chunk {
 		End:    baseChunk.End,
 		Worker: 0,
 		Done:   0,
-		Total:  remainingPerChunk - 1,
+		Total:  remainingPerChunk,
 	}
 
 	baseChunk.End -= remainingPerChunk
-	baseChunk.Total = baseChunk.End - baseChunk.Start
+	baseChunk.Total = baseChunk.End - baseChunk.Start + 1
 
 	return chunk2
 }
@@ -398,7 +398,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 					Worker: uint32(i),
 					Done:   0,
 				}
-				f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start
+				f.Chunks[i].Total = f.Chunks[i].End - f.Chunks[i].Start + 1
 
 				if i == len(f.Chunks)-1 {
 					f.Chunks[i].End += remaining

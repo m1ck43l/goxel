@@ -111,6 +111,30 @@ func TestRunOneFile(t *testing.T) {
 	}
 }
 
+func TestRunOneFileWithOutput(t *testing.T) {
+	goxel := GoXel{
+		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
+		Headers:               map[string]string{},
+		IgnoreSSLVerification: false,
+		OutputDirectory:       output,
+		InputFile:             "",
+		MaxConnections:        4,
+		MaxConnectionsPerFile: 4,
+		OverwriteOutputFile:   false,
+		Quiet:                 false,
+		BufferSize:            256,
+	}
+	goxel.Run()
+
+	filename := path.Join(output, "25MB")
+	defer os.Remove(filename + ".0")
+
+	hash, _ := computeMD5(filename + ".0")
+	if hash == hashes[filename] {
+		t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
+	}
+}
+
 func TestRunMultipleFiles(t *testing.T) {
 	goxel := GoXel{
 		URLs:                  []string{"http://" + host + ":" + port + "/25MB", "http://" + host + ":" + port + "/30MB", "http://" + host + ":" + port + "/50MB"},
