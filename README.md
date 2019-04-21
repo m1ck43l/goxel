@@ -43,10 +43,12 @@ goxel [options] [url1] [url2] [url...]
         Max number of connections (default 8)
   -max-conn-file int
         Max number of connections per file (default 4)
-  -overwrite
-        Overwrite existing file(s)
+  -no-resume
+        Don't resume downloads
   -output string
         Output directory
+  -overwrite
+        Overwrite existing file(s)
   -proxy string
         Proxy string: (http|https|socks5)://0.0.0.0:0000
   -quiet

@@ -40,6 +40,7 @@ func main() {
 	proxy := flag.String("proxy", "", "Proxy string: (http|https|socks5)://0.0.0.0:0000")
 	bufferSize := flag.Int("buffer-size", 256, "Buffer size in KB")
 	scroll := flag.Bool("scroll", false, "Scroll output instead of in place display")
+	noResume := flag.Bool("no-resume", false, "Don't resume downloads")
 
 	alldebridLogin := flag.String("alldebrid-username", "", "Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable")
 	alldebridPassword := flag.String("alldebrid-password", "", "Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable")
@@ -83,6 +84,7 @@ func main() {
 		AlldebridPassword:     *alldebridPassword,
 		BufferSize:            *bufferSize,
 		Scroll:                *scroll,
+		Resume:                !*noResume,
 	}
 	goxel.Run()
 }

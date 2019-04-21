@@ -134,6 +134,10 @@ func (f *File) writeMetadata() {
 
 	f.Valid = true
 
+	if !goxel.Resume {
+		return
+	}
+
 	file, err := os.OpenFile(f.OutputWork, os.O_CREATE|os.O_WRONLY, 0644)
 	defer file.Close()
 	if err == nil {
@@ -249,6 +253,10 @@ func (f *File) UpdateStatus(commit bool) (float64, uint64, uint64, uint64) {
 
 // ResumeChunks tries to resume the current download by checking if the file exists and is valid
 func (f *File) ResumeChunks(maxConnPerFile int) bool {
+	if !goxel.Resume {
+		return false
+	}
+
 	if _, err := os.Stat(f.OutputWork); !os.IsNotExist(err) {
 		var initial []Chunk
 
