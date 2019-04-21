@@ -20,7 +20,7 @@ var goxel *GoXel
 
 const (
 	version         = 0.10
-	usageMsg string = "goxel [options] [url1] [url2] [url...]\n"
+	usageMsg string = "GoXel is a download accelerator written in Go\nUsage: goxel [options] [url1] [url2] [url...]\n"
 )
 
 // GoXel structure contains all the parameters to be used for the GoXel accelerator
