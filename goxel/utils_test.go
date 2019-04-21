@@ -6,7 +6,7 @@ import (
 )
 
 func TestHTTP(t *testing.T) {
-	proxyURL = "http://127.0.0.1:8123"
+	goxel.Proxy = "http://127.0.0.1:8123"
 	client, err := NewClient()
 
 	if err != nil {
@@ -20,7 +20,7 @@ func TestHTTP(t *testing.T) {
 }
 
 func TestHTTPS(t *testing.T) {
-	proxyURL = "https://127.0.0.1:8123"
+	goxel.Proxy = "https://127.0.0.1:8123"
 	client, err := NewClient()
 
 	if err != nil {
@@ -34,7 +34,7 @@ func TestHTTPS(t *testing.T) {
 }
 
 func TestSocks5(t *testing.T) {
-	proxyURL = "socks5://127.0.0.1:8123"
+	goxel.Proxy = "socks5://127.0.0.1:8123"
 	client, err := NewClient()
 
 	if err != nil {
@@ -48,7 +48,7 @@ func TestSocks5(t *testing.T) {
 }
 
 func TestBadProtocol(t *testing.T) {
-	proxyURL = "ftp://127.0.0.1:8123"
+	goxel.Proxy = "ftp://127.0.0.1:8123"
 	_, err := NewClient()
 
 	if err == nil {

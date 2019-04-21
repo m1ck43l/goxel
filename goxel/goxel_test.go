@@ -41,6 +41,8 @@ var hashes map[string]string
 var output string
 
 func TestMain(m *testing.M) {
+	goxel = &GoXel{}
+
 	files := map[string]int{
 		"25MB": 25000000,
 		"30MB": 30000000,
@@ -96,6 +98,31 @@ func TestRunOneFile(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:            256,
+	}
+	goxel.Run()
+
+	filename := path.Join(output, "25MB")
+	defer os.Remove(filename + ".0")
+
+	hash, _ := computeMD5(filename + ".0")
+	if hash == hashes[filename] {
+		t.Error(fmt.Sprintf("Hashes don't match: orig [%s] != downloaded [%v]", hashes[filename], hash))
+	}
+}
+
+func TestRunOneFileWithOutput(t *testing.T) {
+	goxel := GoXel{
+		URLs:                  []string{"http://" + host + ":" + port + "/25MB"},
+		Headers:               map[string]string{},
+		IgnoreSSLVerification: false,
+		OutputDirectory:       output,
+		InputFile:             "",
+		MaxConnections:        4,
+		MaxConnectionsPerFile: 4,
+		OverwriteOutputFile:   false,
+		Quiet:                 false,
+		BufferSize:            256,
 	}
 	goxel.Run()
 
@@ -119,6 +146,7 @@ func TestRunMultipleFiles(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:            256,
 	}
 	goxel.Run()
 
@@ -144,6 +172,7 @@ func TestSingleConnection(t *testing.T) {
 		MaxConnectionsPerFile: 1,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:            256,
 	}
 	goxel.Run()
 
@@ -169,6 +198,7 @@ func TestOverwrite(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   true,
 		Quiet:                 true,
+		BufferSize:            256,
 	}
 	goxel.Run()
 
@@ -189,6 +219,7 @@ func TestOverwrite(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   true,
 		Quiet:                 true,
+		BufferSize:            256,
 	}
 	goxel.Run()
 
@@ -213,6 +244,7 @@ func TestNoRange(t *testing.T) {
 		MaxConnectionsPerFile: 4,
 		OverwriteOutputFile:   false,
 		Quiet:                 true,
+		BufferSize:            256,
 	}
 	goxel.Run()
 

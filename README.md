@@ -31,6 +31,8 @@ goxel [options] [url1] [url2] [url...]
         Alldebrid password, can also be passed in the GOXEL_ALLDEBRID_PASSWD environment variable
   -alldebrid-username string
         Alldebrid username, can also be passed in the GOXEL_ALLDEBRID_USERNAME environment variable
+  -buffer-size int
+        Buffer size in KB (default 256)
   -file string
         Links file
   -header value
@@ -49,6 +51,8 @@ goxel [options] [url1] [url2] [url...]
         Proxy string: (http|https|socks5)://0.0.0.0:0000
   -quiet
         No stdout output
+  -scroll
+        Scroll output instead of in place display
   -version
         Version
 
