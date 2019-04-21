@@ -1,7 +1,8 @@
 # <img src="https://user-images.githubusercontent.com/918212/56085390-af18c780-5e42-11e9-9ae7-7ba453502ddb.png" width="300">
 
 
-[![GoDoc](https://godoc.org/github.com/m1ck43l/goxel?status.svg)](https://godoc.org/github.com/m1ck43l/goxel) [![Build Status](https://travis-ci.org/m1ck43l/goxel.svg?branch=master)](https://travis-ci.org/m1ck43l/goxel/builds) [![Go Report Card](https://goreportcard.com/badge/github.com/m1ck43l/goxel)](https://goreportcard.com/report/github.com/m1ck43l/goxel) [![Coverage Status](https://coveralls.io/repos/github/m1ck43l/goxel/badge.svg?branch=master)](https://coveralls.io/github/m1ck43l/goxel?branch=master)
+[![GoDoc](https://godoc.org/github.com/m1ck43l/goxel?status.svg)](https://godoc.org/github.com/m1ck43l/goxel) [![Build Status](https://travis-ci.org/m1ck43l/goxel.svg?branch=master)](https://travis-ci.org/m1ck43l/goxel/builds) [![Go Report Card](https://goreportcard.com/badge/github.com/m1ck43l/goxel)](https://goreportcard.com/report/github.com/m1ck43l/goxel) [![Coverage Status](https://coveralls.io/repos/github/m1ck43l/goxel/badge.svg?branch=master&_=2)](https://coveralls.io/github/m1ck43l/goxel?branch=master)
+
 
 *GoXel - download accelerator written in Go*
 
