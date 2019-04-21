@@ -102,10 +102,7 @@ func NewClient() (*http.Client, error) {
 					Proxy: http.ProxyURL(pURL),
 				}
 			} else if string(protocol) == "socks5://" {
-				dialer, err := proxy.SOCKS5("tcp", strings.Replace(goxel.Proxy, "socks5://", "", 1), nil, proxy.Direct)
-				if err != nil {
-					return client, errors.New("Invalid proxy URL")
-				}
+				dialer, _ := proxy.SOCKS5("tcp", strings.Replace(goxel.Proxy, "socks5://", "", 1), nil, proxy.Direct)
 				transport = &http.Transport{
 					Dial: dialer.Dial,
 				}
