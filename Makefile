@@ -12,6 +12,7 @@ $(OUTPUT)/goxel: $(SOURCES)
 deps:
 	$(GOGET) github.com/dustin/go-humanize
 	$(GOGET) golang.org/x/net/proxy
+	$(GOGET) github.com/spf13/pflag
 
 clean:
 	$(GO) clean -x
