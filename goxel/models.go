@@ -60,7 +60,7 @@ type File struct {
 	Chunks                       []Chunk
 	Finished, Valid, Initialized bool
 	Error                        string
-	Size                         uint64
+	Size, Initial                uint64
 	Progress                     []string
 	Mux                          sync.Mutex
 	ID                           uint32
@@ -304,6 +304,8 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 
 		f.Chunks = make([]Chunk, len(initial))
 		for i := 0; i < len(initial); i++ {
+			f.Initial += initial[i].Done
+
 			f.Chunks[i] = Chunk{
 				Start:  initial[i].Start + initial[i].Done,
 				End:    initial[i].End,

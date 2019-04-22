@@ -174,9 +174,7 @@ func (g *GoXel) Run() {
 	var totalBytes uint64
 	for _, f := range results {
 		f.finish()
-		for i := 0; i < len(f.Chunks); i++ {
-			totalBytes += f.Chunks[i].Total
-		}
+		totalBytes += f.Size - f.Initial
 	}
 
 	if !g.Quiet {
