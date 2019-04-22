@@ -8,7 +8,7 @@ import (
 
 func SetupAlldebridTest() {
 	http.HandleFunc("/user/login", func(w http.ResponseWriter, r *http.Request) {
-		gets, _ := r.URL.Query()["username"]
+		gets := r.URL.Query()["username"]
 		username := gets[0]
 
 		switch username {
@@ -28,7 +28,7 @@ func SetupAlldebridTest() {
 	})
 
 	http.HandleFunc("/link/unlock", func(w http.ResponseWriter, r *http.Request) {
-		gets, _ := r.URL.Query()["token"]
+		gets := r.URL.Query()["token"]
 		token := gets[0]
 
 		if token != "alldebridtoken" {
@@ -36,7 +36,7 @@ func SetupAlldebridTest() {
 			return
 		}
 
-		getsu, _ := r.URL.Query()["link"]
+		getsu := r.URL.Query()["link"]
 		url := getsu[0]
 
 		if url == "http://upload.com/test/video.mp4" {

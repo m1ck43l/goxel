@@ -35,7 +35,6 @@ const (
 	port = "8080"
 )
 
-var files map[string]int
 var hashes map[string]string
 
 var output string

@@ -60,7 +60,7 @@ type File struct {
 	Chunks                       []Chunk
 	Finished, Valid, Initialized bool
 	Error                        string
-	Size                         uint64
+	Size, Initial                uint64
 	Progress                     []string
 	Mux                          sync.Mutex
 	ID                           uint32
@@ -113,7 +113,7 @@ func (f *File) BuildProgress(unit float64) string {
 	rng := int(float64(f.Size) * unit)
 
 	if !f.Initialized {
-		f.Progress = make([]string, rng, rng)
+		f.Progress = make([]string, rng)
 		for i := 0; i < rng; i++ {
 			f.Progress[i] = "+"
 		}
@@ -139,20 +139,21 @@ func (f *File) writeMetadata() {
 	}
 
 	file, err := os.OpenFile(f.OutputWork, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
 	defer file.Close()
-	if err == nil {
-		var buf bytes.Buffer
-		binary.Write(&buf, binary.BigEndian, uint64(len(f.Chunks)))
 
-		for _, chunk := range f.Chunks {
-			binary.Write(&buf, binary.BigEndian, chunk)
-		}
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.BigEndian, uint64(len(f.Chunks)))
 
-		_, err = file.Write(buf.Bytes())
-		if err != nil {
-			log.Printf(err.Error())
-		}
-	} else {
+	for _, chunk := range f.Chunks {
+		binary.Write(&buf, binary.BigEndian, chunk)
+	}
+
+	_, err = file.Write(buf.Bytes())
+	if err != nil {
 		log.Printf(err.Error())
 	}
 }
@@ -261,48 +262,50 @@ func (f *File) ResumeChunks(maxConnPerFile int) bool {
 		var initial []Chunk
 
 		file, err := os.Open(f.OutputWork)
+		if err != nil {
+			log.Println(err.Error())
+			return false
+		}
 		defer file.Close()
-		if err == nil {
-			// Read initial number of chunks
-			rbytes := make([]byte, 8)
+
+		// Read initial number of chunks
+		rbytes := make([]byte, 8)
+		_, err = file.Read(rbytes)
+		if err != nil {
+			return false
+		}
+
+		var initialSize uint64
+		buf := bytes.NewBuffer(rbytes)
+		err = binary.Read(buf, binary.BigEndian, &initialSize)
+		if err != nil {
+			return false
+		}
+
+		initial = make([]Chunk, initialSize)
+		for i := 0; uint64(i) < initialSize; i++ {
+			rbytes = make([]byte, unsafe.Sizeof(Chunk{}))
 			_, err := file.Read(rbytes)
 			if err != nil {
 				return false
 			}
 
-			var initialSize uint64
+			initial[i] = Chunk{}
 			buf := bytes.NewBuffer(rbytes)
-			err = binary.Read(buf, binary.BigEndian, &initialSize)
+			err = binary.Read(buf, binary.BigEndian, &initial[i])
 			if err != nil {
 				return false
 			}
-
-			initial = make([]Chunk, initialSize, initialSize)
-			for i := 0; uint64(i) < initialSize; i++ {
-				rbytes = make([]byte, unsafe.Sizeof(Chunk{}))
-				_, err := file.Read(rbytes)
-				if err != nil {
-					return false
-				}
-
-				initial[i] = Chunk{}
-				buf := bytes.NewBuffer(rbytes)
-				err = binary.Read(buf, binary.BigEndian, &initial[i])
-				if err != nil {
-					return false
-				}
-			}
-		} else {
-			log.Printf(err.Error())
-			return false
 		}
 
 		sort.SliceStable(initial, func(i, j int) bool {
 			return initial[i].Start < initial[j].Start
 		})
 
-		f.Chunks = make([]Chunk, len(initial), len(initial))
+		f.Chunks = make([]Chunk, len(initial))
 		for i := 0; i < len(initial); i++ {
+			f.Initial += initial[i].Done
+
 			f.Chunks[i] = Chunk{
 				Start:  initial[i].Start + initial[i].Done,
 				End:    initial[i].End,
@@ -384,7 +387,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 
 	if resume := f.ResumeChunks(nbrPerFile); !resume {
 		if !acceptRangesOk || len(acceptRanges) == 0 || acceptRanges[0] != "bytes" {
-			f.Chunks = make([]Chunk, 1, 1)
+			f.Chunks = make([]Chunk, 1)
 
 			f.Chunks[0] = Chunk{
 				Start: 0,
@@ -410,7 +413,7 @@ func (f *File) BuildChunks(wg *sync.WaitGroup, chunks chan download, nbrPerFile 
 }
 
 func buildRootChunks(f *File, nbrPerFile int) {
-	f.Chunks = make([]Chunk, nbrPerFile, nbrPerFile)
+	f.Chunks = make([]Chunk, nbrPerFile)
 
 	chunkSize := f.Size / uint64(len(f.Chunks))
 	remaining := f.Size - chunkSize*uint64(len(f.Chunks))
