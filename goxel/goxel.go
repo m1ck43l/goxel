@@ -17,6 +17,7 @@ import (
 
 var activeConnections counter
 var goxel *GoXel
+var cMessages chan Message
 
 const (
 	version         = 0.11
@@ -102,6 +103,9 @@ func NewGoXel() *GoXel {
 func (g *GoXel) Run() {
 	activeConnections = counter{}
 
+	// errors will contain all global errors to be displayed by the monitoring
+	cMessages = make(chan Message, 100)
+
 	if g.IgnoreSSLVerification {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -158,12 +162,7 @@ func (g *GoXel) Run() {
 		wg.Add(1)
 		go DownloadWorker(i, &wg, chunks, g.BufferSize, finished)
 	}
-
-	if g.Quiet {
-		go QuietMonitoring(results, done, chunks)
-	} else {
-		go Monitoring(results, done, chunks)
-	}
+	go Monitoring(results, done, chunks, g.Quiet)
 
 	wgP.Wait()
 	wg.Wait()

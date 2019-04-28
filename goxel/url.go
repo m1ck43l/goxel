@@ -29,7 +29,7 @@ func (s *StandardURLPreprocessor) process(urls []string) []string {
 		}
 
 		if !re.Match([]byte(nURL)) {
-			fmt.Printf("[INFO] Removing non URL line [%s].\n", nURL)
+			cMessages <- NewInfoMessage("URLS", fmt.Sprintf("Removing non URL line [%s].", nURL))
 			continue
 		}
 

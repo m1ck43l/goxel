@@ -121,7 +121,7 @@ func handleChunkDownload(download *download, i int, client *http.Client, bs int)
 	defer resp.Body.Close()
 
 	if resp.StatusCode > 399 {
-		fmt.Printf("An HTTP error occurred: status %v", resp.StatusCode)
+		cMessages <- NewErrorMessageForFile(download.FileID, "DOWNLOAD", fmt.Sprintf("An HTTP error occurred: status %v", resp.StatusCode))
 		return
 	}
 

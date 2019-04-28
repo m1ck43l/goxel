@@ -42,6 +42,8 @@ var output string
 func TestMain(m *testing.M) {
 	goxel = &GoXel{}
 
+	cMessages = make(chan Message, 1000)
+
 	files := map[string]int{
 		"25MB": 25000000,
 		"30MB": 30000000,

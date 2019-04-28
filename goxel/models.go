@@ -18,7 +18,77 @@ import (
 
 const (
 	workExtension = "gx"
+	maxUint32     = ^uint32(0)
 )
+
+// MessageType identifies the severity of the message
+type MessageType int
+
+// Message Severities
+const (
+	Info MessageType = iota + 1
+	Warning
+	Error
+)
+
+func (t MessageType) String() string {
+	switch t {
+	case 1:
+		return "INFO"
+	case 2:
+		return "WARNING"
+	case 3:
+		return "ERROR"
+	}
+	return "UNKNOW"
+}
+
+// Message contains global messages to be displayed by monitoring
+type Message struct {
+	FileID           uint32
+	Content, Context string
+	Type             MessageType
+}
+
+// NewErrorMessage builds an Error message with no related file
+func NewErrorMessage(context string, content string) Message {
+	return NewMessageForFile(maxUint32, context, content, Error)
+}
+
+// NewErrorMessageForFile builds an Error message with a related file
+func NewErrorMessageForFile(fileID uint32, context string, content string) Message {
+	return NewMessageForFile(fileID, context, content, Error)
+}
+
+// NewInfoMessage builds an Info message with no related file
+func NewInfoMessage(context string, content string) Message {
+	return NewMessageForFile(maxUint32, context, content, Info)
+}
+
+// NewInfoMessageForFile builds an Info message with a related file
+func NewInfoMessageForFile(fileID uint32, context string, content string) Message {
+	return NewMessageForFile(fileID, context, content, Info)
+}
+
+// NewWarningMessage builds a Warning message with no related file
+func NewWarningMessage(context string, content string) Message {
+	return NewMessageForFile(maxUint32, context, content, Warning)
+}
+
+// NewWarningMessageForFile builds a Warning message with a related file
+func NewWarningMessageForFile(fileID uint32, context string, content string) Message {
+	return NewMessageForFile(fileID, context, content, Warning)
+}
+
+// NewMessageForFile builds a standard Message
+func NewMessageForFile(fileID uint32, context string, content string, t MessageType) Message {
+	return Message{
+		FileID:  fileID,
+		Content: content,
+		Context: context,
+		Type:    t,
+	}
+}
 
 // Chunk stores a part of a file being downloaded
 type Chunk struct {

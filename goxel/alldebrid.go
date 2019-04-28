@@ -86,7 +86,7 @@ func (s *AllDebridURLPreprocessor) initialize(url string) {
 	s.Client, _ = NewClient()
 	req, err := s.Client.Get(s.API + "/user/login?agent=" + agent + "&username=" + s.Login + "&password=" + s.Password)
 	if err != nil {
-		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())
+		cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("Following error occurred while connecting to AllDebrid service: %v", err.Error()))
 		return
 	}
 	defer req.Body.Close()
@@ -96,28 +96,28 @@ func (s *AllDebridURLPreprocessor) initialize(url string) {
 	var resp LoginResponse
 	err = json.Unmarshal(b, &resp)
 	if err != nil {
-		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", err.Error())
+		cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("Following error occurred while connecting to AllDebrid service: %v", err.Error()))
 		return
 	}
 
 	if !resp.Success {
-		fmt.Printf("[ERROR] Following error occurred while connecting to AllDebrid service: %v\n", aderrors[resp.Error])
+		cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("Following error occurred while connecting to AllDebrid service: %v", aderrors[resp.Error]))
 		return
 	}
 
 	if !resp.User.Premium {
-		fmt.Printf("[ERROR] Non premium user are not supported, bypassing.\n")
+		cMessages <- NewWarningMessage("ALLDEBRID", "Non premium user are not supported, bypassing.")
 		return
 	}
 
-	fmt.Printf("[INFO] Successfully logged as [%v]\n", resp.User.Username)
+	cMessages <- NewInfoMessage("ALLDEBRID", fmt.Sprintf("Successfully logged as [%v]", resp.User.Username))
 
 	s.Token = resp.Token
 	s.UseMe = true
 
 	req, err = s.Client.Get(s.API + "/hosts/regexp")
 	if err != nil {
-		fmt.Printf("[ERROR] Can't retrieve hosts listing: %v\n", err.Error())
+		cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("Can't retrieve hosts listing: %v", err.Error()))
 		return
 	}
 	defer req.Body.Close()
@@ -127,7 +127,7 @@ func (s *AllDebridURLPreprocessor) initialize(url string) {
 	var respD DomainsResponse
 	err = json.Unmarshal(b, &respD)
 	if err != nil {
-		fmt.Printf("[ERROR] Can't retrieve hosts listing: %v\n", err.Error())
+		cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("Can't retrieve hosts listing: %v", err.Error()))
 		return
 	}
 
@@ -155,7 +155,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 			if v.Match([]byte(url)) {
 				req, err := s.Client.Get(s.API + "/link/unlock?agent=" + agent + "&token=" + s.Token + "&link=" + url)
 				if err != nil {
-					fmt.Printf("[ERROR] An error occurred while debriding [%v]: %v\n", url, err.Error())
+					cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("An error occurred while debriding [%v]: %v", url, err.Error()))
 					continue
 				}
 				defer req.Body.Close()
@@ -165,12 +165,12 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 				var resp LinkResponse
 				err = json.Unmarshal(b, &resp)
 				if err != nil {
-					fmt.Printf("[ERROR] An error occurred while debriding [%v]: %v\n", url, err.Error())
+					cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("An error occurred while debriding [%v]: %v", url, err.Error()))
 					continue
 				}
 
 				if !resp.Success {
-					fmt.Printf("[ERROR] Ignoring [%v] due to an error: %v\n", url, aderrors[resp.Error])
+					cMessages <- NewErrorMessage("ALLDEBRID", fmt.Sprintf("Ignoring [%v] due to an error: %v", url, aderrors[resp.Error]))
 				} else {
 					output = append(output, resp.Infos.Link)
 				}
@@ -181,7 +181,7 @@ func (s *AllDebridURLPreprocessor) process(urls []string) []string {
 		}
 
 		if !found {
-			fmt.Printf("[INFO] Ignore alldebrid for [%v] as no domain matches the URL\n", url)
+			cMessages <- NewWarningMessage("ALLDEBRID", fmt.Sprintf("Ignore alldebrid for [%v] as no domain matches the URL", url))
 			output = append(output, url)
 		}
 	}
