@@ -1,3 +1,5 @@
+export GO111MODULE=on
+
 SOURCES = main.go
 OUTPUT = bin
 
@@ -10,9 +12,7 @@ $(OUTPUT)/goxel: $(SOURCES)
 	$(GO) build -x -o $(OUTPUT)/goxel $(SOURCES)
 
 deps:
-	$(GOGET) github.com/dustin/go-humanize
-	$(GOGET) golang.org/x/net/proxy
-	$(GOGET) github.com/spf13/pflag
+	${GO} build -v -o ${OUTPUT}/goxel
 
 clean:
 	$(GO) clean -x
