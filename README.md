@@ -13,7 +13,7 @@ GoXel is a Go package for faster downloads from the internet:
 * Guess filename from URL path
 * Download batches of files concurrently
 
-Requires Go v1.8+
+Requires Go v1.11+
 
 GoXel was inspired by axel (https://github.com/axel-download-accelerator/axel)
 
