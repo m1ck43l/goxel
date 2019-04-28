@@ -29,6 +29,9 @@ func (q *QuietMonitoring) monitor(files []*File, d chan download, messages []str
 	finished := 0
 	for _, f := range files {
 		if !f.Valid {
+			if f.Error != "" {
+				finished++
+			}
 			continue
 		}
 
@@ -59,6 +62,9 @@ func buildChunkDescription(output []string, files []*File, count uint64, speed u
 
 	for idx, f := range files {
 		if !f.Valid {
+			if f.Error != "" {
+				finished++
+			}
 			continue
 		}
 
