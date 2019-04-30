@@ -117,6 +117,11 @@ func (c *Chunk) BuildProgress(buf []string, unit float64) {
 		buf[offset+j] = "-"
 	}
 
+	if offset+int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0)) >= len(buf) {
+		// Progress is already done, do not add worker ID
+		return
+	}
+
 	buf[offset+int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0))] = fmt.Sprintf("%d", c.Worker)
 
 	for j := int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0)) + 1; j < rng; j++ {
