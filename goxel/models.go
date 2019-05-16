@@ -125,6 +125,9 @@ func (c *Chunk) BuildProgress(buf []string, unit float64) {
 	buf[offset+int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0))] = fmt.Sprintf("%d", c.Worker)
 
 	for j := int(math.Max(math.Min(float64(c.Done)*unit, float64(rng)-1), 0)) + 1; j < rng; j++ {
+		if offset+j >= len(buf) {
+			break
+		}
 		buf[offset+j] = " "
 	}
 }
